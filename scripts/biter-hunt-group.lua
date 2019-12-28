@@ -7,24 +7,9 @@ local Events = require("utility/events")
 local EventScheduler = require("utility/event-scheduler")
 local Constants = require("constants")
 
-local biterHuntGroupFrequencyRangeTicks = {
-    20 * 60 * 60,
-    45 * 60 * 60
-}
-local biterHuntGroupSize = 80
-local biterHuntGroupEvolutionAddition = 0.1
-local biterHuntGroupRadius = 100
 local biterHuntGroupPreTunnelEffectTime = 10
-local biterHuntGroupTunnelTime = 180
-local incomingBitersWarningTime = 600
 local biterHuntGroupState = {start = "start", groundMovement = "groundMovement", preBitersActiveEffect = "preBitersActiveEffect", bitersActive = "bitersActive"}
-
 local testing = true
-if testing then
-    biterHuntGroupFrequencyRangeTicks = {600, 600}
-    biterHuntGroupSize = 2
-    biterHuntGroupRadius = 5
-end
 
 BiterHuntGroup.CreateGlobals = function()
     global.BiterHuntGroup = global.BiterHuntGroup or {}
@@ -32,6 +17,15 @@ BiterHuntGroup.CreateGlobals = function()
     global.BiterHuntGroup.Results = global.BiterHuntGroup.Results or {}
     global.BiterHuntGroup.id = global.BiterHuntGroup.id or 0
     global.BiterHuntGroup.unitsTargetedAtSpawn = global.BiterHuntGroup.unitsTargetedAtSpawn or nil
+
+    global.Settings = global.Settings or {}
+    global.Settings.groupFrequencyRangeLowTicks = global.Settings.groupFrequencyRangeLowTicks or 0
+    global.Settings.groupFrequencyRangeHighTicks = global.Settings.groupFrequencyRangeHighTicks or 0
+    global.Settings.groupSize = global.Settings.groupSize or 0
+    global.Settings.evolutionBonus = global.Settings.evolutionBonus or 0
+    global.Settings.groupSpawnRadius = global.Settings.groupSpawnRadius or 0
+    global.Settings.tunnelingTicks = global.Settings.tunnelingTicks or 0
+    global.Settings.warningTicks = global.Settings.warningTicks or 0
 end
 
 BiterHuntGroup.OnLoad = function()
@@ -45,6 +39,7 @@ BiterHuntGroup.OnLoad = function()
 end
 
 BiterHuntGroup.OnStartup = function()
+    BiterHuntGroup.OnRuntimeModSettingChanged(nil)
     if global.BiterHuntGroup.nextGroupTick == nil then
         global.BiterHuntGroup.nextGroupTick = game.tick
         BiterHuntGroup.ScheduleNextBiterHuntGroup()
@@ -56,22 +51,70 @@ BiterHuntGroup.OnStartup = function()
     end
 end
 
+BiterHuntGroup.OnRuntimeModSettingChanged = function(event)
+    if event == nil or event.setting == "group_frequency_range_low_minutes" then
+        global.Settings.groupFrequencyRangeLowTicks = tonumber(settings.global["group_frequency_range_low_minutes"].value) * 60 * 60
+    end
+    if event == nil or event.setting == "group_frequency_range_high_minutes" then
+        global.Settings.groupFrequencyRangeHighTicks = tonumber(settings.global["group_frequency_range_high_minutes"].value) * 60 * 60
+    end
+    if event == nil or event.setting == "group_size" then
+        global.Settings.groupSize = tonumber(settings.global["group_size"].value)
+    end
+    if event == nil or event.setting == "group_evolution_bonus_percent" then
+        local value = tonumber(settings.global["group_evolution_bonus_percent"].value)
+        if value > 0 then
+            global.Settings.evolutionBonus = value / 100
+        else
+            global.Settings.evolutionBonus = 0
+        end
+    end
+    if event == nil or event.setting == "group_spawn_radius_from_target" then
+        global.Settings.groupSpawnRadius = tonumber(settings.global["group_spawn_radius_from_target"].value)
+    end
+    if event == nil or event.setting == "group_tunnelling_time_seconds" then
+        local value = tonumber(settings.global["group_tunnelling_time_seconds"].value)
+        if value > 0 then
+            global.Settings.tunnelingTicks = value * 60
+        else
+            global.Settings.tunnelingTicks = 0
+        end
+    end
+    if event == nil or event.setting == "group_incomming_warning_seconds" then
+        local value = tonumber(settings.global["group_incomming_warning_seconds"].value)
+        if value > 0 then
+            global.Settings.warningTicks = value * 60
+        else
+            global.Settings.warningTicks = 0
+        end
+    end
+
+    if testing then
+        global.Settings.groupFrequencyRangeLowTicks = 600
+        global.Settings.groupFrequencyRangeHighTicks = 600
+        global.Settings.warningTicks = 120
+        global.Settings.tunnelingTicks = 120
+        global.Settings.groupSize = 2
+        global.Settings.groupSpawnRadius = 5
+    end
+end
+
 BiterHuntGroup.OnPlayerJoinedGame = function(event)
     local player = game.get_player(event.player_index)
     BiterHuntGroup.GuiRecreate(player)
 end
 
 BiterHuntGroup.ScheduleNextBiterHuntGroup = function()
-    global.BiterHuntGroup.nextGroupTick = global.BiterHuntGroup.nextGroupTick + math.random(biterHuntGroupFrequencyRangeTicks[1], biterHuntGroupFrequencyRangeTicks[2])
+    global.BiterHuntGroup.nextGroupTick = global.BiterHuntGroup.nextGroupTick + math.random(global.Settings.groupFrequencyRangeLowTicks, global.Settings.groupFrequencyRangeHighTicks)
     BiterHuntGroup.UpdateNextGroupTickWarning()
 end
 
 BiterHuntGroup.UpdateNextGroupTickWarning = function()
-    global.BiterHuntGroup.nextGroupTickWarning = global.BiterHuntGroup.nextGroupTick - incomingBitersWarningTime
+    global.BiterHuntGroup.nextGroupTickWarning = global.BiterHuntGroup.nextGroupTick - global.Settings.warningTicks
 end
 
 BiterHuntGroup.MakeBitersAttackNow = function()
-    global.BiterHuntGroup.nextGroupTick = game.tick + incomingBitersWarningTime
+    global.BiterHuntGroup.nextGroupTick = game.tick + global.Settings.warningTicks
     BiterHuntGroup.UpdateNextGroupTickWarning()
 end
 
@@ -192,7 +235,7 @@ BiterHuntGroup.On10Ticks = function(event)
         BiterHuntGroup.ClearGlobals()
         BiterHuntGroup.ScheduleNextBiterHuntGroup()
         global.BiterHuntGroup.state = biterHuntGroupState.groundMovement
-        global.BiterHuntGroup.stateChangeTick = tick + biterHuntGroupTunnelTime - biterHuntGroupPreTunnelEffectTime
+        global.BiterHuntGroup.stateChangeTick = tick + global.Settings.tunnelingTicks - biterHuntGroupPreTunnelEffectTime
         BiterHuntGroup.SelectTarget()
         local biterTargetPos = BiterHuntGroup.GetPositionForTarget()
         game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter]" .. " hunting " .. global.BiterHuntGroup.targetName .. " at [gps=" .. math.floor(biterTargetPos.x) .. "," .. math.floor(biterTargetPos.y) .. "]")
@@ -289,11 +332,12 @@ end
 BiterHuntGroup._CreateGroundMovement = function(distance, attempts)
     local debug = false
     local biterPositions = {}
-    local angleRad = math.rad(360 / biterHuntGroupSize)
+    local groupSize = global.Settings.groupSize
+    local angleRad = math.rad(360 / groupSize)
     local surface = global.BiterHuntGroup.Surface
     local centerPosition = BiterHuntGroup.GetPositionForTarget()
-    distance = distance or biterHuntGroupRadius
-    for i = 1, biterHuntGroupSize do
+    distance = distance or global.Settings.groupSpawnRadius
+    for i = 1, groupSize do
         local x = centerPosition.x + (distance * math.cos(angleRad * i))
         local y = centerPosition.y + (distance * math.sin(angleRad * i))
         local foundPosition = surface.find_non_colliding_position(Constants.ModName .. "-biter_ground_movement", {x, y}, 2, 1, true)
@@ -303,8 +347,8 @@ BiterHuntGroup._CreateGroundMovement = function(distance, attempts)
     end
     Logging.Log("initial #biterPositions: " .. #biterPositions, debug)
 
-    if #biterPositions < (biterHuntGroupSize / 2) then
-        distance = distance * 0.75
+    if #biterPositions < (groupSize / 2) then
+        distance = distance * 0.9
         attempts = attempts or 0
         attempts = attempts + 1
         Logging.Log("not enough places on attempt: " .. attempts, debug)
@@ -322,10 +366,10 @@ BiterHuntGroup._CreateGroundMovement = function(distance, attempts)
         BiterHuntGroup.SpawnGroundMovementEffect(surface, position)
     end
 
-    local maxAttempts = (biterHuntGroupSize - #biterPositions) * 5
+    local maxAttempts = (groupSize - #biterPositions) * 5
     local currentAttempts = 0
     Logging.Log("maxAttempts: " .. maxAttempts, debug)
-    while #biterPositions < biterHuntGroupSize do
+    while #biterPositions < groupSize do
         local positionToTry = biterPositions[math.random(1, #biterPositions)]
         local foundPosition = surface.find_non_colliding_position(Constants.ModName .. "-biter_ground_movement", positionToTry, 2, 1, true)
         if foundPosition ~= nil then
@@ -367,7 +411,7 @@ BiterHuntGroup.SpawnEnemies = function()
     local surface = global.BiterHuntGroup.Surface
     local biterForce = game.forces["enemy"]
     local spawnerTypes = {"biter-spawner", "spitter-spawner"}
-    local evolution = Utils.RoundNumberToDecimalPlaces(biterForce.evolution_factor + biterHuntGroupEvolutionAddition, 3)
+    local evolution = Utils.RoundNumberToDecimalPlaces(biterForce.evolution_factor + global.Settings.evolutionBonus, 3)
     global.BiterHuntGroup.Units = {}
     for _, groundEffect in pairs(global.BiterHuntGroup.GroundMovementEffects) do
         if not groundEffect.valid then

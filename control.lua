@@ -10,8 +10,13 @@ local function OnLoad()
     BiterHuntGroup.OnLoad()
 end
 
+local function OnSettingChanged(event)
+    BiterHuntGroup.OnRuntimeModSettingChanged(event)
+end
+
 local function OnStartup()
     CreateGlobals()
+    OnSettingChanged(nil)
     OnLoad()
 
     BiterHuntGroup.OnStartup()
@@ -20,6 +25,7 @@ end
 script.on_init(OnStartup)
 script.on_configuration_changed(OnStartup)
 script.on_load(OnLoad)
+script.on_event(defines.events.on_runtime_mod_setting_changed, OnSettingChanged)
 
 Events.RegisterEvent(defines.events.on_player_joined_game)
 Events.RegisterEvent(defines.events.on_player_died)
