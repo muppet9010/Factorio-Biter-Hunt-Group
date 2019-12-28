@@ -24,7 +24,7 @@ BiterHuntGroup.CreateGlobals = function()
     global.Settings.groupSize = global.Settings.groupSize or 0
     global.Settings.evolutionBonus = global.Settings.evolutionBonus or 0
     global.Settings.groupSpawnRadius = global.Settings.groupSpawnRadius or 0
-    global.Settings.tunnelingTicks = global.Settings.tunnelingTicks or 0
+    global.Settings.tunnellingTicks = global.Settings.tunnellingTicks or 0
     global.Settings.warningTicks = global.Settings.warningTicks or 0
 end
 
@@ -75,9 +75,9 @@ BiterHuntGroup.OnRuntimeModSettingChanged = function(event)
     if event == nil or event.setting == "group_tunnelling_time_seconds" then
         local value = tonumber(settings.global["group_tunnelling_time_seconds"].value)
         if value > 0 then
-            global.Settings.tunnelingTicks = value * 60
+            global.Settings.tunnellingTicks = value * 60
         else
-            global.Settings.tunnelingTicks = 0
+            global.Settings.tunnellingTicks = 0
         end
     end
     if event == nil or event.setting == "group_incomming_warning_seconds" then
@@ -93,7 +93,7 @@ BiterHuntGroup.OnRuntimeModSettingChanged = function(event)
         global.Settings.groupFrequencyRangeLowTicks = 600
         global.Settings.groupFrequencyRangeHighTicks = 600
         global.Settings.warningTicks = 120
-        global.Settings.tunnelingTicks = 120
+        global.Settings.tunnellingTicks = 120
         global.Settings.groupSize = 2
         global.Settings.groupSpawnRadius = 5
     end
@@ -235,7 +235,7 @@ BiterHuntGroup.On10Ticks = function(event)
         BiterHuntGroup.ClearGlobals()
         BiterHuntGroup.ScheduleNextBiterHuntGroup()
         global.BiterHuntGroup.state = biterHuntGroupState.groundMovement
-        global.BiterHuntGroup.stateChangeTick = tick + global.Settings.tunnelingTicks - biterHuntGroupPreTunnelEffectTime
+        global.BiterHuntGroup.stateChangeTick = tick + global.Settings.tunnellingTicks - biterHuntGroupPreTunnelEffectTime
         BiterHuntGroup.SelectTarget()
         local biterTargetPos = BiterHuntGroup.GetPositionForTarget()
         game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter]" .. " hunting " .. global.BiterHuntGroup.targetName .. " at [gps=" .. math.floor(biterTargetPos.x) .. "," .. math.floor(biterTargetPos.y) .. "]")
