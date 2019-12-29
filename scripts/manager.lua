@@ -5,7 +5,7 @@ local Commands = require("utility/commands")
 local Events = require("utility/events")
 local EventScheduler = require("utility/event-scheduler")
 local Gui = require("scripts/gui")
-local Settings = require("utility/settings")
+local Settings = require("utility/settings-manager")
 local Manager = {}
 local testing = false
 
