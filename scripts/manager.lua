@@ -7,8 +7,7 @@ local EventScheduler = require("utility/event-scheduler")
 local Gui = require("scripts/gui")
 local Settings = require("utility/settings")
 local Manager = {}
-
-local testing = true
+local testing = false
 
 local function CreateGobalDataForBiterHuntGroupId(id)
     global.biterHuntGroups[id] = global.biterHuntGroups[id] or {}
@@ -51,17 +50,6 @@ Manager.OnStartup = function()
     Gui.GuiRecreateAll()
 end
 
-local function RuntimeModSettingsChangedForTargetType(settingTargetName, globalTargetName)
-    if testing then
-        global.Settings.groupFrequencyRangeLowTicks = 600
-        global.Settings.groupFrequencyRangeHighTicks = 600
-        global.Settings.warningTicks = 120
-        global.Settings.tunnellingTicks = 120
-        global.Settings.groupSize = 2
-        global.Settings.groupSpawnRadius = 5
-    end
-end
-
 Manager.GetGlobalSettingForId = function(id, settingName)
     return global.biterHuntGroups[id].Settings[settingName] or global.biterHuntGroups[0].Settings[settingName]
 end
@@ -82,6 +70,7 @@ Manager.OnRuntimeModSettingChanged = function(event)
             end
         )
     end
+    global.biterHuntGroups[2].Settings.groupFrequencyRangeHighTicks = 9999
     if event == nil or event.setting == "group_frequency_range_high_minutes" then
         Settings.HandleSettingWithArrayOfValues(
             "global",
@@ -161,6 +150,18 @@ Manager.OnRuntimeModSettingChanged = function(event)
             end
         )
     end
+
+    if testing then
+        global.biterHuntGroups[0].Settings.groupFrequencyRangeLowTicks = 600
+        global.biterHuntGroups[0].Settings.groupFrequencyRangeHighTicks = 600
+        global.biterHuntGroups[0].Settings.warningTicks = 120
+        global.biterHuntGroups[0].Settings.tunnellingTicks = 120
+        global.biterHuntGroups[0].Settings.groupSize = 2
+        global.biterHuntGroups[0].Settings.groupSpawnRadius = 5
+    end
+
+    Logging.LogPrint(Utils.TableContentsToJSON(global.biterHuntGroups, "global.biterHuntGroups"))
+    global.biterHuntGroups = Utils.GetMaxKey(global.biterHuntGroups)
 end
 
 Manager.OnPlayerJoinedGame = function(event)
