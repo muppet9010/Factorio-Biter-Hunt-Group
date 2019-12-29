@@ -8,11 +8,7 @@ local function GetDefaultInstanceId(instanceId)
     return instanceId or ""
 end
 
-function EventScheduler.RegisterScheduler()
-    script.on_event(defines.events.on_tick, EventScheduler.OnSchedulerCycle)
-end
-
-function EventScheduler.OnSchedulerCycle(event)
+local function OnSchedulerCycle(event)
     local tick = event.tick
     if global.UTILITYSCHEDULEDFUNCTIONS == nil then
         return
@@ -32,6 +28,12 @@ function EventScheduler.OnSchedulerCycle(event)
     end
 end
 
+--Called from the root of Control.lua
+function EventScheduler.RegisterScheduler()
+    script.on_event(defines.events.on_tick, OnSchedulerCycle)
+end
+
+--Called from OnLoad() from each script file.
 function EventScheduler.RegisterScheduledEventType(eventName, eventFunction)
     if eventName == nil or eventFunction == nil then
         error("EventScheduler.RegisterScheduledEventType called with missing arguments")
@@ -39,6 +41,7 @@ function EventScheduler.RegisterScheduledEventType(eventName, eventFunction)
     MOD.scheduledEventNames[eventName] = eventFunction
 end
 
+--Called from OnStartup() or from some other event or trigger to schedule an event.
 function EventScheduler.ScheduleEvent(eventTick, eventName, instanceId, eventData)
     if eventName == nil then
         error("EventScheduler.ScheduleEvent called with missing arguments")
@@ -58,6 +61,7 @@ function EventScheduler.ScheduleEvent(eventTick, eventName, instanceId, eventDat
     global.UTILITYSCHEDULEDFUNCTIONS[eventTick][eventName][instanceId] = eventData
 end
 
+--Called whenever required.
 function EventScheduler.RemoveScheduledEvents(targetEventName, targetInstanceId, targetTick)
     if targetEventName == nil then
         error("EventScheduler.RemoveScheduledEvents called with missing arguments")
@@ -90,6 +94,7 @@ function EventScheduler._RemoveScheduledEventsFromTickEntry(events, targetEventN
     end
 end
 
+--Called whenever required.
 function EventScheduler.IsEventScheduled(targetEventName, targetInstanceId, targetTick)
     if targetEventName == nil then
         error("EventScheduler.IsEventScheduled called with missing arguments")

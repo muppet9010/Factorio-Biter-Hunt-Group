@@ -1,6 +1,7 @@
 local Gui = {}
 local GUIUtil = require("utility/gui-util")
 local Constants = require("constants")
+local SharedData = require("scripts/shared-data")
 
 Gui.GuiCreate = function(player)
     Gui.GuiUpdateAllConnected(player.index)
@@ -21,9 +22,10 @@ Gui.GuiRecreateAll = function()
     end
 end
 
+--TODO: make this loop over each group and check their packs states to see which are current and need displaying
 Gui.GuiUpdateAllConnected = function(specificPlayerIndex)
     local warningLocalisedString
-    if global.BiterHuntGroup.showIncomingGroupWarning ~= nil then
+    if group.state == SharedData.BiterHuntGroupState.warning then
         warningLocalisedString = {"gui-caption.biter_hunt_group-warning-label"}
     end
     local targetLocalisedString
