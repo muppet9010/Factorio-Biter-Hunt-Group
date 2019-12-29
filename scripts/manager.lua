@@ -19,18 +19,9 @@ local function CreateGobalDataForBiterHuntGroupId(id)
     container.unitsTargetedAtSpawn = container.unitsTargetedAtSpawn or nil
 end
 
-local function CreateGlobalSettingsForBiterHuntGroupId(id)
-    global.biterHuntGroups[id] = global.biterHuntGroups[id] or {}
-    global.biterHuntGroups[id].Settings = global.biterHuntGroups[id].Settings or {}
-    --Default setting values populated by the OnRuntimeModSettingChanged function
-end
-
 Manager.CreateGlobals = function()
     global.biterHuntGroupsCount = global.biterHuntGroupsCount or 0
     global.biterHuntGroups = global.biterHuntGroups or {}
-    --Group ID 0 is the default container for settings
-    global.biterHuntGroups[0] = global.biterHuntGroups[0] or {}
-    CreateGlobalSettingsForBiterHuntGroupId(0)
 end
 
 Manager.OnLoad = function()
@@ -55,47 +46,44 @@ Manager.GetGlobalSettingForId = function(id, settingName)
 end
 
 Manager.OnRuntimeModSettingChanged = function(event)
-    if event == nil or event.setting == "group_frequency_range_high_minutes" then
+    local groupContainer, settingsContainerName = global.biterHuntGroups, "Settings"
+
+    if event == nil or event.setting == "group_frequency_range_low_minutes" then
         Settings.HandleSettingWithArrayOfValues(
             "global",
             "group_frequency_range_low_minutes",
             "number",
             20,
-            function(id, value)
-                CreateGlobalSettingsForBiterHuntGroupId(id)
+            groupContainer,
+            settingsContainerName,
+            "groupFrequencyRangeLowTicks",
+            function(value)
                 if value ~= nil and value > 0 then
                     value = value * 60 * 60
                 end
-                global.biterHuntGroups[id].Settings.groupFrequencyRangeLowTicks = value
+                return value
             end
         )
     end
-    global.biterHuntGroups[2].Settings.groupFrequencyRangeHighTicks = 9999
     if event == nil or event.setting == "group_frequency_range_high_minutes" then
         Settings.HandleSettingWithArrayOfValues(
             "global",
             "group_frequency_range_high_minutes",
             "number",
             45,
-            function(id, value)
-                CreateGlobalSettingsForBiterHuntGroupId(id)
+            groupContainer,
+            settingsContainerName,
+            "groupFrequencyRangeHighTicks",
+            function(value)
                 if value ~= nil and value > 0 then
                     value = value * 60 * 60
                 end
-                global.biterHuntGroups[id].Settings.groupFrequencyRangeHighTicks = value
+                return value
             end
         )
     end
     if event == nil or event.setting == "group_size" then
-        Settings.HandleSettingWithArrayOfValues(
-            "global",
-            "group_size",
-            "number",
-            80,
-            function(id, value)
-                global.biterHuntGroups[id].Settings.groupSize = value
-            end
-        )
+        Settings.HandleSettingWithArrayOfValues("global", "group_size", "number", 80, groupContainer, settingsContainerName, "groupSize")
     end
     if event == nil or event.setting == "group_evolution_bonus_percent" then
         Settings.HandleSettingWithArrayOfValues(
@@ -103,24 +91,19 @@ Manager.OnRuntimeModSettingChanged = function(event)
             "group_evolution_bonus_percent",
             "number",
             10,
-            function(id, value)
+            groupContainer,
+            settingsContainerName,
+            "evolutionBonus",
+            function(value)
                 if value ~= nil and value > 0 then
                     value = value / 100
                 end
-                global.biterHuntGroups[id].Settings.evolutionBonus = value
+                return value
             end
         )
     end
     if event == nil or event.setting == "group_spawn_radius_from_target" then
-        Settings.HandleSettingWithArrayOfValues(
-            "global",
-            "group_spawn_radius_from_target",
-            "number",
-            100,
-            function(id, value)
-                global.biterHuntGroups[id].Settings.groupSpawnRadius = value
-            end
-        )
+        Settings.HandleSettingWithArrayOfValues("global", "group_spawn_radius_from_target", "number", 100, groupContainer, settingsContainerName, "groupSpawnRadius")
     end
     if event == nil or event.setting == "group_tunnelling_time_seconds" then
         Settings.HandleSettingWithArrayOfValues(
@@ -128,11 +111,14 @@ Manager.OnRuntimeModSettingChanged = function(event)
             "group_tunnelling_time_seconds",
             "number",
             3,
-            function(id, value)
+            groupContainer,
+            settingsContainerName,
+            "tunnellingTicks",
+            function(value)
                 if value ~= nil and value > 0 then
                     value = value * 60
                 end
-                global.biterHuntGroups[id].Settings.tunnellingTicks = value
+                return value
             end
         )
     end
@@ -142,11 +128,14 @@ Manager.OnRuntimeModSettingChanged = function(event)
             "group_incomming_warning_seconds",
             "number",
             10,
-            function(id, value)
+            groupContainer,
+            settingsContainerName,
+            "warningTicks",
+            function(value)
                 if value ~= nil and value > 0 then
                     value = value * 60
                 end
-                global.biterHuntGroups[id].Settings.warningTicks = value
+                return value
             end
         )
     end
@@ -158,9 +147,18 @@ Manager.OnRuntimeModSettingChanged = function(event)
         global.biterHuntGroups[0].Settings.tunnellingTicks = 120
         global.biterHuntGroups[0].Settings.groupSize = 2
         global.biterHuntGroups[0].Settings.groupSpawnRadius = 5
+        global.biterHuntGroups[1] = nil
+        global.biterHuntGroups[2] = nil
     end
 
-    Logging.LogPrint(Utils.TableContentsToJSON(global.biterHuntGroups, "global.biterHuntGroups"))
+    for id, group in pairs(groupContainer) do
+        if Utils.GetTableLength(group[settingsContainerName]) == 0 then
+            Logging.LogPrint("TODO: remvoed group '" .. id .. "' as no settings - TIDY STUFF UP")
+            table.remove(groupContainer, id)
+        end
+    end
+
+    --Logging.LogPrint(Utils.TableContentsToJSON(global.biterHuntGroups, "global.biterHuntGroups"))
     global.biterHuntGroups = Utils.GetMaxKey(global.biterHuntGroups)
 end
 
