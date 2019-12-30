@@ -11,12 +11,11 @@ local SharedData = require("scripts/shared-data")
 local Interfaces = require("utility/interfaces")
 local Manager = {}
 local testing = true
-local BiterHuntGroup = {} -- TODO: I shouldn't be needed
 
 local function CreateGlobalGroup(groupId)
     global.groups[groupId] = global.groups[groupId] or {}
     local group = global.groups[groupId]
-    group.groupId = group.groupId or groupId
+    group.id = group.id or groupId
     group.results = group.results or {}
     group.packs = group.packs or {}
     group.lastPackId = group.lastPackId or 0
@@ -29,12 +28,9 @@ Manager.CreateGlobals = function()
 end
 
 Manager.OnLoad = function()
-    Commands.Register("biters_attack_now", {"api-description.biter_hunt_group-biters_attack_now"}, Manager.MakeBitersAttackNow, true)
-    --Events.RegisterHandler(defines.events.on_player_joined_game, "BiterHuntGroupManager", Manager.OnPlayerJoinedGame)
-    --Events.RegisterHandler(defines.events.on_player_died, "BiterHuntGroupManager", Manager.OnPlayerDied)
-    --Events.RegisterHandler(defines.events.on_player_left_game, "BiterHuntGroupManager", Manager.OnPlayerLeftGame)
-    --Commands.Register("biters_write_out_hunt_group_results", {"api-description.biter_hunt_group-biters_write_out_hunt_group_results"}, Manager.WriteOutHuntGroupResults, false)
-    --Events.RegisterHandler(defines.events.on_player_driving_changed_state, "BiterHuntGroupManager", Manager.OnPlayerDrivingChangedState)
+    Commands.Register("biters_attack_now", {"api-description.biter_hunt_group-biters_attack_now"}, Manager.MakeBitersAttackNowCommand, true)
+    Events.RegisterHandler(defines.events.on_player_joined_game, "BiterHuntGroupManager", Manager.OnPlayerJoinedGame)
+    Commands.Register("biters_write_out_hunt_group_results", {"api-description.biter_hunt_group-biters_write_out_hunt_group_results"}, Manager.WriteOutHuntGroupResults, false)
     Interfaces.RegisterInterface("Manager.GetGlobalSettingForId", Manager.GetGlobalSettingForId)
     Interfaces.RegisterInterface("Manager.ScheduleNextPackForGroup", Manager.ScheduleNextPackForGroup)
 end
@@ -154,8 +150,8 @@ Manager.OnRuntimeModSettingChanged = function(event)
     end
 
     if testing then
-        global.groups[0].settings.groupFrequencyRangeLowTicks = 120
-        global.groups[0].settings.groupFrequencyRangeHighTicks = 120
+        global.groups[0].settings.groupFrequencyRangeLowTicks = 60 * 5
+        global.groups[0].settings.groupFrequencyRangeHighTicks = 60 * 5
         global.groups[0].settings.warningTicks = 120
         global.groups[0].settings.tunnellingTicks = 120
         global.groups[0].settings.groupSize = 2
@@ -166,7 +162,7 @@ Manager.OnRuntimeModSettingChanged = function(event)
 
     for groupId, group in pairs(groupContainer) do
         if Utils.GetTableLength(group[settingsContainerName]) == 0 then
-            Logging.LogPrint("TODO: remvoed group '" .. groupId .. "' as no settings - TIDY STUFF UP")
+            Logging.LogPrint("TODO: removed group '" .. groupId .. "' as no settings - TIDY STUFF UP")
             table.remove(groupContainer, groupId)
         end
     end
@@ -183,52 +179,56 @@ end
 Manager.ScheduleNextPackForGroup = function(group)
     local nextPackActionTick = game.tick + math.random(Manager.GetGlobalSettingForId(group.id, "groupFrequencyRangeLowTicks"), Manager.GetGlobalSettingForId(group.id, "groupFrequencyRangeHighTicks"))
     local pack = Interfaces.Call("Controller.CreatePack", group)
-    EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_Warning", group.id, {pack = pack})
+    local uniqueId = group.id .. "_" .. pack.id
+    EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_Warning", uniqueId, {pack = pack})
 end
 
---[[
-    TODO: FIX LATER
-BiterHuntGroup.MakeBitersAttackNow = function()
-    EventScheduler.RemoveScheduledEvents("Controller.ActionPack", groupId)
-    global.BiterHuntGroup.nextGroupTick = game.tick + global.settings.warningTicks
-    BiterHuntGroup.UpdateNextGroupTickWarning()
-end
-]]
-BiterHuntGroup.OnPlayerDied = function(event)
-    local playerID = event.player_index
-    if playerID == global.BiterHuntGroup.targetPlayerID and global.BiterHuntGroup.Results[global.BiterHuntGroup.id].playerWin == nil then
-        global.BiterHuntGroup.Results[global.BiterHuntGroup.id].playerWin = false
-        game.print("[img=entity.medium-biter]      [img=entity.character-corpse]" .. tostring(global.BiterHuntGroup.targetName) .. " lost")
-        BiterHuntGroup.TargetBitersAtSpawn()
-    end
+Manager.MakeBiterGroupPackAttackNow = function(group)
+    local pack = group.packs[group.lastPackId]
+    --Should never happen with current mod functionality. If we create one we need to avoid it creating its own cycle.
+    --[[if pack.state ~= SharedData.biterHuntGroupState.waiting then
+        Logging.LogPrint("adding new pack")
+        pack = Interfaces.Call("Controller.CreatePack", group)
+    end]]
+    local uniqueId = group.id .. "_" .. pack.id
+    EventScheduler.RemoveScheduledEvents("Controller.PackAction_Warning", uniqueId)
+    EventScheduler.ScheduleEvent(game.tick, "Controller.PackAction_Warning", uniqueId, {pack = pack})
 end
 
-BiterHuntGroup.OnPlayerLeftGame = function(event)
-    local playerID = event.player_index
-    if playerID == global.BiterHuntGroup.targetPlayerID and global.BiterHuntGroup.Results[global.BiterHuntGroup.id].playerWin == nil then
-        global.BiterHuntGroup.Results[global.BiterHuntGroup.id].playerWin = false
-        game.print("[img=entity.medium-biter]      [img=entity.character]" .. tostring(global.BiterHuntGroup.targetName) .. " fled like a coward")
-        BiterHuntGroup.TargetBitersAtSpawn()
-    end
-end
-
-BiterHuntGroup.WriteOutHuntGroupResults = function(commandData)
-    game.write_file("Biter Hunt Group Results.txt", Utils.TableContentsToJSON(global.BiterHuntGroup.Results), false, commandData.player_index)
-end
-
-BiterHuntGroup.OnPlayerDrivingChangedState = function(event)
-    local playerId = event.player_index
-    if playerId ~= global.BiterHuntGroup.targetPlayerID then
-        return
-    end
-    local player = game.get_player(playerId)
-    if player.vehicle ~= nil then
-        global.BiterHuntGroup.TargetEntity = player.vehicle
-    elseif player.character ~= nil then
-        global.BiterHuntGroup.TargetEntity = player.character
+Manager.MakeBitersAttackNowCommand = function(command)
+    local args = Commands.GetArgumentsFromCommand(command.parameter)
+    if #args > 0 then
+        local groupId_string = args[1]
+        local groupId = tonumber(groupId_string)
+        if groupId == nil then
+            Logging.LogPrint("biters_attack_now command called with non numerical ID")
+            return
+        end
+        groupId = Utils.RoundNumberToDecimalPlaces(groupId, 0)
+        if groupId <= 0 then
+            Logging.LogPrint("biters_attack_now command called with non existent low numerical ID")
+            return
+        end
+        if groupId > global.groupsCount then
+            Logging.LogPrint("biters_attack_now command called with non existent high numerical ID")
+            return
+        end
+        local group = global.groups[groupId]
+        Manager.MakeBiterGroupPackAttackNow(group)
     else
-        BiterHuntGroup.TargetBitersAtSpawn()
+        for groupId = 1, global.groupsCount do
+            local group = global.groups[groupId]
+            Manager.MakeBiterGroupPackAttackNow(group)
+        end
     end
+end
+
+Manager.WriteOutHuntGroupResults = function(commandData)
+    local results = {}
+    for id = 1, global.groupsCount do
+        results[id] = global.groups[id].results
+    end
+    game.write_file("Biter Hunt Group Results.txt", Utils.TableContentsToJSON(results), false, commandData.player_index)
 end
 
 return Manager
