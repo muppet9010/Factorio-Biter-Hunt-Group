@@ -142,7 +142,7 @@ local function ParseScheduledEvents(targetEventName, targetInstanceId, targetTic
     else
         local events = global.UTILITYSCHEDULEDFUNCTIONS[targetTick]
         if events ~= nil then
-            local outcome = actionFunction(events, targetEventName, targetInstanceId, tick)
+            local outcome = actionFunction(events, targetEventName, targetInstanceId)
             result = outcome.result
             if outcome.results ~= nil then
                 table.insert(results, outcome.results)
@@ -152,7 +152,7 @@ local function ParseScheduledEvents(targetEventName, targetInstanceId, targetTic
     return result, results
 end
 
-local function IsEventScheduledInTickEntry(events, targetEventName, targetInstanceId, tick)
+local function IsEventScheduledInTickEntry(events, targetEventName, targetInstanceId)
     if events[targetEventName] ~= nil and events[targetEventName][targetInstanceId] ~= nil then
         return {result = true}
     end

@@ -1,53 +1,67 @@
 data:extend(
     {
         {
-            name = "group_frequency_range_low_minutes",
+            name = "biter_hunt_group-group_frequency_range_low_minutes",
             type = "string-setting",
             default_value = 20,
             setting_type = "runtime-global",
             order = "1001"
         },
         {
-            name = "group_frequency_range_high_minutes",
+            name = "biter_hunt_group-group_frequency_range_high_minutes",
             type = "string-setting",
             default_value = 45,
             setting_type = "runtime-global",
             order = "1002"
         },
         {
-            name = "group_size",
+            name = "biter_hunt_group-group_size",
             type = "string-setting",
             default_value = 80,
             setting_type = "runtime-global",
             order = "1003"
         },
         {
-            name = "group_evolution_bonus_percent",
+            name = "biter_hunt_group-group_evolution_bonus_percent",
             type = "string-setting",
             default_value = 10,
             setting_type = "runtime-global",
             order = "1004"
         },
         {
-            name = "group_spawn_radius_from_target",
+            name = "biter_hunt_group-group_spawn_radius_from_target",
             type = "string-setting",
             default_value = 100,
             setting_type = "runtime-global",
             order = "1005"
         },
         {
-            name = "group_tunnelling_time_seconds",
+            name = "biter_hunt_group-group_tunnelling_time_seconds",
             type = "string-setting",
             default_value = 3,
             setting_type = "runtime-global",
             order = "1006"
         },
         {
-            name = "group_incomming_warning_seconds",
+            name = "biter_hunt_group-group_incomming_warning_seconds",
             type = "string-setting",
             default_value = 10,
             setting_type = "runtime-global",
             order = "1007"
+        },
+        {
+            name = "biter_hunt_group-group_warning_text",
+            type = "string-setting",
+            default_value = "Incomming Tunneling Biter Pack",
+            setting_type = "runtime-global",
+            order = "1008"
+        },
+        {
+            name = "biter_hunt_group-group_hunting_text",
+            type = "string-setting",
+            default_value = "Pack currently hunting __1__ on __2__",
+            setting_type = "runtime-global",
+            order = "1009"
         }
     }
 )

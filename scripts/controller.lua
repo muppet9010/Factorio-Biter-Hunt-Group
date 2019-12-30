@@ -15,7 +15,7 @@ local Interfaces = require("utility/interfaces")
 local Events = require("utility/events")
 
 local biterHuntGroupPreTunnelEffectTime = 10
-local testing_only1PackPerGroup = false
+local testing_only1PackPerGroup = true
 
 Controller.OnLoad = function()
     EventScheduler.RegisterScheduledEventType("Controller.PackAction_Warning", Controller.PackAction_Warning)
@@ -48,13 +48,15 @@ Controller.CreatePack = function(group)
     pack.spawnRadius = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "groupSpawnRadius")
     pack.evolutionBonus = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "evolutionBonus")
     pack.tunnellingTicks = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "tunnellingTicks")
+    pack.warningText = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "warningText")
+    pack.huntingText = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "huntingText")
     return pack
 end
 
 Controller.PackAction_Warning = function(event)
     local tick, uniqueId, pack = event.tick, event.instanceId, event.data.pack
     pack.state = SharedData.biterHuntGroupState.warning
-    Gui.GuiUpdateAllConnected()
+    Gui.UpdateAllConnectedPlayers()
     local nextPackActionTick = tick + pack.warningTicks
     EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_GroundMovement", uniqueId, {pack = pack})
 end
@@ -125,7 +127,7 @@ Controller.ClearGlobals = function(pack)
     pack.targetEntity = nil
     pack.targetName = nil
     pack.unitsTargetedAtSpawn = nil
-    Gui.GuiUpdateAllConnected()
+    Gui.UpdateAllConnectedPlayers()
 end
 
 Controller.ValidSurface = function(surface)
@@ -160,14 +162,14 @@ Controller.SelectTarget = function(pack)
         Controller.SetSpawnAsTarget(pack)
         pack.surface = game.surfaces[1]
     end
-    Gui.GuiUpdateAllConnected()
+    Gui.UpdateAllConnectedPlayers()
 end
 
 Controller.EnsureValidateTarget = function(pack)
     local targetEntity = pack.targetEntity
     if targetEntity ~= nil and (not targetEntity.valid) then
         Controller.SetSpawnAsTarget(pack)
-        Gui.GuiUpdateAllConnected()
+        Gui.UpdateAllConnectedPlayers()
     end
 end
 

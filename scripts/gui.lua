@@ -2,71 +2,77 @@ local Gui = {}
 local GUIUtil = require("utility/gui-util")
 local Constants = require("constants")
 local SharedData = require("scripts/shared-data")
+--local Utils = require("utility/utils")
+--local Logging = require("utility/logging")
 
-Gui.GuiCreate = function(player)
-    Gui.GuiUpdateAllConnected(player.index)
-end
-
-Gui.GuiDestroy = function(player)
-    GUIUtil.DestroyPlayersReferenceStorage(player.index, "biterhuntgroup")
-end
-
-Gui.GuiRecreate = function(player)
-    Gui.GuiDestroy(player)
-    Gui.GuiCreate(player)
-end
-
-Gui.GuiRecreateAll = function()
-    for _, player in pairs(game.players) do
-        Gui.GuiRecreate(player)
-    end
-end
-
---TODO: make this loop over each group and check their packs states to see which are current and need displaying
-Gui.GuiUpdateAllConnected = function(specificPlayerIndex)
-    --[[local warningLocalisedString
-    if group.state == SharedData.BiterHuntGroupState.warning then
-        warningLocalisedString = {"gui-caption.biter_hunt_group-warning-label"}
-    end
-    local targetLocalisedString
-    if global.BiterHuntGroup.targetName ~= nil and global.BiterHuntGroup.Surface ~= nil then
-        targetLocalisedString = {"gui-caption.biter_hunt_group-target-label", global.BiterHuntGroup.targetName, global.BiterHuntGroup.Surface.name}
-    end
-    for _, player in pairs(game.connected_players) do
-        if specificPlayerIndex == nil or (specificPlayerIndex ~= nil and specificPlayerIndex == player.index) then
-            Gui.GuiUpdatePlayerWithData(player, warningLocalisedString, targetLocalisedString)
-        end
-    end]]
-end
-
-Gui.GetModGuiFrame = function(player)
-    local frameElement = GUIUtil.GetElementFromPlayersReferenceStorage(player.index, "biterhuntgroup", "main", "frame")
-    if frameElement == nil then
-        frameElement = GUIUtil.AddElement({parent = player.gui.left, name = "main", type = "frame", direction = "vertical", style = "muppet_margin_frame"}, "biterhuntgroup")
-    end
+local function GetModFrame(player)
+    local frameElement = GUIUtil.GetOrAddElement({parent = player.gui.left, name = "main", type = "frame", direction = "vertical", style = "muppet_margin_frame"}, "biterhuntgroup")
+    frameElement.visible = false
     return frameElement
 end
 
-Gui.GuiUpdatePlayerWithData = function(player, warningLocalisedString, targetLocalisedString)
-    local playerIndex = player.index
-    local childElementPresent = false
+local function GetHuntingFrame(mainFrame)
+    local frameElement = GUIUtil.GetOrAddElement({parent = mainFrame, name = "hunting", type = "frame", direction = "vertical", style = "muppet_margin_frame"}, "biterhuntgroup")
+    frameElement.visible = false
+    return frameElement
+end
 
-    GUIUtil.DestroyElementInPlayersReferenceStorage(playerIndex, "biterhuntgroup", "warning", "label")
-    if warningLocalisedString ~= nil then
-        local frameElement = Gui.GetModGuiFrame(player)
-        GUIUtil.AddElement({parent = frameElement, name = "warning", type = "label", caption = warningLocalisedString, style = Constants.ModName .. "_biterwarning_text"}, "biterhuntgroup")
-        childElementPresent = true
+local function GetIncommingFrame(mainFrame)
+    local frameElement = GUIUtil.GetOrAddElement({parent = mainFrame, name = "incomming", type = "frame", direction = "vertical", style = "muppet_margin_frame"}, "biterhuntgroup")
+    frameElement.visible = false
+    return frameElement
+end
+
+Gui.Create = function(player)
+    Gui.UpdatePlayer(player.index)
+end
+
+Gui.Destroy = function(player)
+    GUIUtil.DestroyPlayersReferenceStorage(player.index, "biterhuntgroup")
+end
+
+Gui.Recreate = function(player)
+    Gui.Destroy(player)
+    Gui.Create(player)
+end
+
+Gui.RecreateAll = function()
+    for _, player in pairs(game.players) do
+        Gui.Recreate(player)
     end
+end
 
-    GUIUtil.DestroyElementInPlayersReferenceStorage(playerIndex, "biterhuntgroup", "target", "label")
-    if targetLocalisedString ~= nil then
-        local frameElement = Gui.GetModGuiFrame(player)
-        GUIUtil.AddElement({parent = frameElement, name = "target", type = "label", caption = targetLocalisedString, style = "muppet_bold_text"}, "biterhuntgroup")
-        childElementPresent = true
+Gui.UpdatePlayer = function(playerIndex)
+    local player = game.get_player(playerIndex)
+    local mainFrameElement = GetModFrame(player)
+    local huntingFrameElement = GetHuntingFrame(mainFrameElement)
+    local incommingFrameElement = GetIncommingFrame(mainFrameElement)
+    huntingFrameElement.clear()
+    incommingFrameElement.clear()
+
+    for groupId = 1, global.groupsCount do
+        local group = global.groups[groupId]
+        for _, pack in pairs(group.packs) do
+            local uniqueId = group.id .. "_" .. pack.id
+            if pack.targetName ~= nil then
+                local huntingString = string.gsub(string.gsub(pack.huntingText, "__1__", pack.targetName), "__2__", pack.surface.name)
+                GUIUtil.AddElement({parent = huntingFrameElement, name = "target" .. uniqueId, type = "label", caption = huntingString, style = "muppet_bold_text"})
+                mainFrameElement.visible = true
+                huntingFrameElement.visible = true
+            end
+            if pack.state == SharedData.biterHuntGroupState.warning then
+                local warningString = pack.warningText
+                GUIUtil.AddElement({parent = incommingFrameElement, name = "warning" .. uniqueId, type = "label", caption = warningString, style = Constants.ModName .. "_biterwarning_text"})
+                mainFrameElement.visible = true
+                incommingFrameElement.visible = true
+            end
+        end
     end
+end
 
-    if not childElementPresent then
-        GUIUtil.DestroyElementInPlayersReferenceStorage(playerIndex, "biterhuntgroup", "main", "frame")
+Gui.UpdateAllConnectedPlayers = function()
+    for _, player in pairs(game.connected_players) do
+        Gui.UpdatePlayer(player.index)
     end
 end
 
