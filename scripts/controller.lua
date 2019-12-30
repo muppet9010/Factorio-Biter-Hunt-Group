@@ -11,88 +11,110 @@ local Gui = require("scripts/gui")
 local Interfaces = require("utility/interfaces")
 
 local biterHuntGroupPreTunnelEffectTime = 10
+local testing_only1PackPerGroup = true
 
 Controller.OnLoad = function()
-    EventScheduler.RegisterScheduledEventType("Controller.ActionPack", Controller.ActionPack)
+    EventScheduler.RegisterScheduledEventType("Controller.PackAction_Warning", Controller.PackAction_Warning)
+    EventScheduler.RegisterScheduledEventType("Controller.PackAction_GroundMovement", Controller.PackAction_GroundMovement)
+    EventScheduler.RegisterScheduledEventType("Controller.PackAction_PreSpawnEffect", Controller.PackAction_PreSpawnEffect)
+    EventScheduler.RegisterScheduledEventType("Controller.PackAction_SpawnBiters", Controller.PackAction_SpawnBiters)
+    EventScheduler.RegisterScheduledEventType("Controller.PackAction_BitersActive", Controller.PackAction_BitersActive)
     Interfaces.RegisterInterface("Controller.CreatePack", Controller.CreatePack)
 end
 
-Controller.CreatePack = function(groupId)
-    local group = global.Groups[groupId]
+Controller.CreatePack = function(group)
     group.lastPackId = group.lastPackId + 1
-
     local pack = {}
-    pack.group = group
     pack.id = group.lastPackId
-    pack.state = SharedData.BiterHuntGroupState.waiting
-    pack.Units = pack.Units
+    pack.group = group
+    group.packs[pack.id] = pack
+    pack.state = SharedData.biterHuntGroupState.waiting
+    pack.units = pack.units
     pack.currentlyTargetedAtSpawn = nil
     pack.targetPlayerID = nil
-    pack.TargetEntity = nil
+    pack.targetEntity = nil
     pack.targetName = nil
-    pack.Surface = nil
-    pack.GroundMovementEffects = nil
-
-    group.Packs[pack.id] = pack
+    pack.surface = nil
+    pack.groundMovementEffects = nil
+    pack.warningTicks = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "warningTicks")
+    pack.packSize = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "groupSize")
+    pack.spawnRadius = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "groupSpawnRadius")
+    pack.evolutionBonus = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "evolutionBonus")
+    pack.tunnellingTicks = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "tunnellingTicks")
+    return pack
 end
 
-Controller.ActionPack = function(event)
-    local tick, groupId, data = event.tick, event.instanceId, event.data
-    local group, packId = global.Groups[groupId], data.packId
-    local pack = group.Packs[packId]
-    local state = pack.state
-    if state == SharedData.BiterHuntGroupState.waiting then
-        pack.state = SharedData.BiterHuntGroupState.warning
-        Gui.GuiUpdateAllConnected()
-        local nextPackActionTick = tick + Interfaces.Call("Manager.GetGlobalSettingForId", groupId, "group_incomming_warning_seconds")
-        EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.ActionPack", groupId, {groupId = groupId, packId = packId})
-        return
-    elseif state == SharedData.BiterHuntGroupState.warning then
-        pack.state = SharedData.BiterHuntGroupState.groundMovement
-        if group.Results[pack.id] ~= nil and group.Results[pack.id].playerWin == nil then
-            game.print("[img=entity.medium-biter]      [img=entity.character]" .. pack.targetName .. " draw")
+Controller.PackAction_Warning = function(event)
+    local tick, groupId, pack = event.tick, event.instanceId, event.data.pack
+    pack.state = SharedData.biterHuntGroupState.warning
+    Gui.GuiUpdateAllConnected()
+    local nextPackActionTick = tick + pack.warningTicks
+    EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_GroundMovement", groupId, {pack = pack})
+end
+
+Controller.PackAction_GroundMovement = function(event)
+    local tick, groupId, pack = event.tick, event.instanceId, event.data.pack
+    local group = pack.group
+    pack.state = SharedData.biterHuntGroupState.groundMovement
+    if group.results[pack.id] ~= nil and group.results[pack.id].playerWin == nil then
+        game.print("[img=entity.medium-biter]      [img=entity.character]" .. pack.targetName .. " draw")
+    end
+    Controller.ClearGlobals(pack)
+    if testing_only1PackPerGroup ~= true then
+        Interfaces.Call("Manager.ScheduleNextPackForGroup", group)
+    end
+    Controller.SelectTarget(pack)
+    local biterTargetPos = Controller.GetPositionForTarget(pack)
+    game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter]" .. " hunting " .. pack.targetName .. " at [gps=" .. math.floor(biterTargetPos.x) .. "," .. math.floor(biterTargetPos.y) .. "]")
+    group.results[pack.id] = {playerWin = nil, targetName = pack.targetName}
+    Controller.CreateGroundMovement(pack)
+    local nextPackActionTick = tick + pack.tunnellingTicks - biterHuntGroupPreTunnelEffectTime
+    EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_PreSpawnEffect", groupId, {pack = pack})
+end
+
+Controller.PackAction_PreSpawnEffect = function(event)
+    local tick, groupId, pack = event.tick, event.instanceId, event.data.pack
+    pack.state = SharedData.biterHuntGroupState.preBitersSpawnEffect
+    Controller.SpawnEnemyPreEffects(pack)
+    local nextPackActionTick = tick + biterHuntGroupPreTunnelEffectTime
+    EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_SpawnBiters", groupId, {pack = pack})
+end
+
+Controller.PackAction_SpawnBiters = function(event)
+    local tick, groupId, pack = event.tick, event.instanceId, event.data.pack
+    pack.state = SharedData.biterHuntGroupState.spawnBiters
+    Controller.EnsureValidateTarget(pack)
+    Controller.SpawnEnemies(pack)
+    Controller.CommandEnemies(pack)
+    local nextPackActionTick = tick + 60
+    EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_BitersActive", groupId, {pack = pack})
+end
+
+Controller.PackAction_BitersActive = function(event)
+    local tick, groupId, pack = event.tick, event.instanceId, event.data.pack
+    local group = pack.group
+    pack.state = SharedData.biterHuntGroupState.bitersActive
+    for i, biter in pairs(pack.units) do
+        if not biter.valid then
+            pack.units[i] = nil
         end
-        Controller.ClearGlobals(pack)
-        Interfaces.Call("Manager.ScheduleNextPackForGroup", groupId)
-        Controller.SelectTarget(pack)
-        local biterTargetPos = Controller.GetPositionForTarget(pack)
-        game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter]" .. " hunting " .. pack.targetName .. " at [gps=" .. math.floor(biterTargetPos.x) .. "," .. math.floor(biterTargetPos.y) .. "]")
-        group.Results[packId] = {playerWin = nil, targetName = pack.targetName}
-        Controller.CreateGroundMovement(pack)
-        local nextPackActionTick = tick + global.Settings.tunnellingTicks - biterHuntGroupPreTunnelEffectTime
-        EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.ActionPack", groupId, {groupId = groupId, packId = packId})
-    elseif state == SharedData.BiterHuntGroupState.groundMovement then
-        pack.state = SharedData.BiterHuntGroupState.preBitersSpawnEffect
-        Controller.SpawnEnemyPreEffects(pack)
-        local nextPackActionTick = tick + biterHuntGroupPreTunnelEffectTime
-        EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.ActionPack", groupId, {groupId = groupId, packId = packId})
-    elseif state == SharedData.BiterHuntGroupState.preBitersSpawnEffect then
-        pack.state = SharedData.BiterHuntGroupState.bitersActive
-        Controller.EnsureValidateTarget(pack)
-        Controller.SpawnEnemies(group, pack)
-        Controller.CommandEnemies(group, pack)
-    elseif state == SharedData.BiterHuntGroupState.bitersActive then
-        for i, biter in pairs(pack.Units) do
-            if not biter.valid then
-                pack.Units[i] = nil
-            end
+    end
+    if Utils.GetTableNonNilLength(pack.units) == 0 then
+        if group.results[pack.id].playerWin == nil then
+            group.results[pack.id].playerWin = true
+            game.print("[img=entity.medium-biter-corpse]      [img=entity.character]" .. pack.targetName .. " won")
         end
-        if Utils.GetTableNonNilLength(pack.Units) == 0 then
-            --TODO: remove pack from array as all finished with at the end of this
-            if group.Results[packId].playerWin == nil then
-                group.Results[packId].playerWin = true
-                game.print("[img=entity.medium-biter-corpse]      [img=entity.character]" .. pack.targetName .. " won")
-            end
-            Controller.ClearGlobals(pack)
-        else
-            Controller.CommandEnemies(group, pack)
-        end
+        group.packs[pack.id] = nil
+    else
+        Controller.CommandEnemies(pack)
+        local nextPackActionTick = tick + 60
+        EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_BitersActive", groupId, {pack = pack})
     end
 end
 
 Controller.ClearGlobals = function(pack)
     pack.targetPlayerID = nil
-    pack.TargetEntity = nil
+    pack.targetEntity = nil
     pack.targetName = nil
     pack.unitsTargetedAtSpawn = nil
     Gui.GuiUpdateAllConnected()
@@ -120,34 +142,34 @@ Controller.SelectTarget = function(pack)
         local target = validPlayers[math.random(1, #validPlayers)]
         pack.targetPlayerID = target.index
         if target.vehicle ~= nil then
-            pack.TargetEntity = target.vehicle
+            pack.targetEntity = target.vehicle
         else
-            pack.TargetEntity = target.character
+            pack.targetEntity = target.character
         end
         pack.targetName = target.name
-        pack.Surface = target.surface
+        pack.surface = target.surface
     else
         pack.targetPlayerID = nil
-        pack.TargetEntity = nil
+        pack.targetEntity = nil
         pack.targetName = "at Spawn"
-        pack.Surface = game.surfaces[1]
+        pack.surface = game.surfaces[1]
     end
     Gui.GuiUpdateAllConnected()
 end
 
 Controller.EnsureValidateTarget = function(pack)
-    local targetEntity = pack.TargetEntity
+    local targetEntity = pack.targetEntity
     if targetEntity ~= nil and (not targetEntity.valid) then
         pack.targetPlayerID = nil
-        pack.TargetEntity = nil
+        pack.targetEntity = nil
         pack.targetName = "Spawn"
         Gui.GuiUpdateAllConnected()
     end
 end
 
 Controller.GetPositionForTarget = function(pack)
-    local surface = pack.Surface
-    local targetEntity = pack.TargetEntity
+    local surface = pack.surface
+    local targetEntity = pack.targetEntity
     if targetEntity ~= nil and targetEntity.valid then
         return targetEntity.position
     else
@@ -160,14 +182,13 @@ Controller.CreateGroundMovement = function(pack)
 end
 Controller._CreateGroundMovement = function(pack, distance, attempts)
     local debug = false
-    local group = pack.group
     local biterPositions = {}
-    local groupSize = group.groupSize
-    local angleRad = math.rad(360 / groupSize)
-    local surface = pack.Surface
+    local packSize = pack.packSize
+    local angleRad = math.rad(360 / packSize)
+    local surface = pack.surface
     local centerPosition = Controller.GetPositionForTarget(pack)
-    distance = distance or group.groupSpawnRadius
-    for i = 1, groupSize do
+    distance = distance or pack.spawnRadius
+    for i = 1, packSize do
         local x = centerPosition.x + (distance * math.cos(angleRad * i))
         local y = centerPosition.y + (distance * math.sin(angleRad * i))
         local foundPosition = surface.find_non_colliding_position(Constants.ModName .. "-biter_ground_movement", {x, y}, 2, 1, true)
@@ -177,7 +198,7 @@ Controller._CreateGroundMovement = function(pack, distance, attempts)
     end
     Logging.Log("initial #biterPositions: " .. #biterPositions, debug)
 
-    if #biterPositions < (groupSize / 2) then
+    if #biterPositions < (packSize / 2) then
         distance = distance * 0.9
         attempts = attempts or 0
         attempts = attempts + 1
@@ -191,15 +212,15 @@ Controller._CreateGroundMovement = function(pack, distance, attempts)
         end
     end
 
-    pack.GroundMovementEffects = {}
+    pack.groundMovementEffects = {}
     for _, position in pairs(biterPositions) do
         Controller.SpawnGroundMovementEffect(pack, surface, position)
     end
 
-    local maxAttempts = (groupSize - #biterPositions) * 5
+    local maxAttempts = (packSize - #biterPositions) * 5
     local currentAttempts = 0
     Logging.Log("maxAttempts: " .. maxAttempts, debug)
-    while #biterPositions < groupSize do
+    while #biterPositions < packSize do
         local positionToTry = biterPositions[math.random(1, #biterPositions)]
         local foundPosition = surface.find_non_colliding_position(Constants.ModName .. "-biter_ground_movement", positionToTry, 2, 1, true)
         if foundPosition ~= nil then
@@ -221,13 +242,13 @@ Controller.SpawnGroundMovementEffect = function(pack, surface, position)
         Logging.LogPrint("failed to make effect at: " .. Logging.PositionToString(position))
     else
         effect.destructible = false
-        table.insert(pack.GroundMovementEffects, effect)
+        table.insert(pack.groundMovementEffects, effect)
     end
 end
 
 Controller.SpawnEnemyPreEffects = function(pack)
-    local surface = pack.Surface
-    for _, groundEffect in pairs(pack.GroundMovementEffects) do
+    local surface = pack.surface
+    for _, groundEffect in pairs(pack.groundMovementEffects) do
         if not groundEffect.valid then
             Logging.LogPrint("ground effect has been removed by something, no SpawnEnemiePreEffects can be made")
         else
@@ -237,25 +258,25 @@ Controller.SpawnEnemyPreEffects = function(pack)
     end
 end
 
-Controller.SpawnEnemies = function(group, pack)
-    local surface = pack.Surface
+Controller.SpawnEnemies = function(pack)
+    local surface = pack.surface
     local biterForce = game.forces["enemy"]
     local spawnerTypes = {"biter-spawner", "spitter-spawner"}
-    local evolution = Utils.RoundNumberToDecimalPlaces(biterForce.evolution_factor + group.evolutionBonus, 3)
-    pack.Units = {}
-    for _, groundEffect in pairs(pack.GroundMovementEffects) do
+    local evolution = Utils.RoundNumberToDecimalPlaces(biterForce.evolution_factor + pack.evolutionBonus, 3)
+    pack.units = {}
+    for _, groundEffect in pairs(pack.groundMovementEffects) do
         if not groundEffect.valid then
             Logging.LogPrint("ground effect has been removed by something, no biter can be made")
         else
             local position = groundEffect.position
             groundEffect.destroy()
             local spawnerType = spawnerTypes[math.random(2)]
-            local enemyType = Utils.GetBiterType(global.BiterHuntGroup.EnemyProbabilities, spawnerType, evolution)
+            local enemyType = Utils.GetBiterType(global.EnemyProbabilities, spawnerType, evolution)
             local unit = surface.create_entity {name = enemyType, position = position, force = biterForce}
             if unit == nil then
                 Logging.LogPrint("failed to make unit at: " .. Logging.PositionToString(position))
             else
-                table.insert(pack.Units, unit)
+                table.insert(pack.units, unit)
                 unit.ai_settings.allow_destroy_when_commands_fail = false
                 unit.ai_settings.allow_try_return_to_spawner = false
             end
@@ -264,11 +285,11 @@ Controller.SpawnEnemies = function(group, pack)
 end
 
 --TODO: should this call check valid target?
-Controller.CommandEnemies = function(group, pack)
+Controller.CommandEnemies = function(pack)
     local debug = false
-    local targetEntity = pack.TargetEntity
+    local targetEntity = pack.targetEntity
     if targetEntity ~= nil and not targetEntity.valid then
-        Controller.TargetBitersAtSpawnFromError(group, pack)
+        Controller.TargetBitersAtSpawnFromError(pack)
         Logging.LogPrint("ERROR - Biter target entity is invalid from command enemies - REPORT AS ERROR")
         return
     end
@@ -285,7 +306,7 @@ Controller.CommandEnemies = function(group, pack)
         pack.unitsTargetedAtSpawn = true
         attackCommand = {type = defines.command.attack_area, destination = Controller.GetPositionForTarget(pack), radius = 20, distraction = defines.distraction.by_anything}
     end
-    for i, unit in pairs(pack.Units) do
+    for i, unit in pairs(pack.units) do
         if unit.valid then
             local applyCommand
             if not unit.has_command() then
@@ -325,17 +346,18 @@ Controller.CommandEnemies = function(group, pack)
     end
 end
 
-Controller.TargetBitersAtSpawn = function(group, pack)
-    pack.TargetEntity = nil
-    Controller.CommandEnemies(group, pack)
+Controller.TargetBitersAtSpawn = function(pack)
+    pack.targetEntity = nil
+    Controller.CommandEnemies(pack)
     Controller.ClearGlobals(pack)
 end
 
-Controller.TargetBitersAtSpawnFromError = function(group, pack)
-    if group.Results[pack.id].playerWin == nil then
-        group.Results[pack.id].playerWin = true
+Controller.TargetBitersAtSpawnFromError = function(pack)
+    local group = pack.group
+    if group.results[pack.id].playerWin == nil then
+        group.results[pack.id].playerWin = true
     end
-    Controller.TargetBitersAtSpawn(group, pack)
+    Controller.TargetBitersAtSpawn(pack)
 end
 
 return Controller

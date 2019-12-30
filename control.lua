@@ -1,7 +1,7 @@
 local Events = require("utility/events")
 local EventScheduler = require("utility/event-scheduler")
 local Manager = require("scripts/manager")
-local Controller = require("scripts/manager")
+local Controller = require("scripts/controller")
 
 local function CreateGlobals()
     Manager.CreateGlobals()

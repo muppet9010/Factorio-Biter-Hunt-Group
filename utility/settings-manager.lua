@@ -67,4 +67,16 @@ Settings.HandleSettingWithArrayOfValues = function(settingType, settingName, exp
     end
 end
 
+Settings.GetSettingValueForId = function(globalGroupsContainer, id, globalSettingContainerName, settingName)
+    local thisGroup = globalGroupsContainer[id]
+    if thisGroup ~= nil and thisGroup[globalSettingContainerName] ~= nil and thisGroup[globalSettingContainerName][settingName] ~= nil then
+        return thisGroup[globalSettingContainerName][settingName]
+    end
+    local defaultGroup = globalGroupsContainer[0]
+    if defaultGroup ~= nil and defaultGroup[globalSettingContainerName] ~= nil and defaultGroup[globalSettingContainerName][settingName] ~= nil then
+        return defaultGroup[globalSettingContainerName][settingName]
+    end
+    error("Mod Setting '" .. settingName .. "' doesn't exist")
+end
+
 return Settings

@@ -24,7 +24,7 @@ end
 
 --TODO: make this loop over each group and check their packs states to see which are current and need displaying
 Gui.GuiUpdateAllConnected = function(specificPlayerIndex)
-    local warningLocalisedString
+    --[[local warningLocalisedString
     if group.state == SharedData.BiterHuntGroupState.warning then
         warningLocalisedString = {"gui-caption.biter_hunt_group-warning-label"}
     end
@@ -36,7 +36,7 @@ Gui.GuiUpdateAllConnected = function(specificPlayerIndex)
         if specificPlayerIndex == nil or (specificPlayerIndex ~= nil and specificPlayerIndex == player.index) then
             Gui.GuiUpdatePlayerWithData(player, warningLocalisedString, targetLocalisedString)
         end
-    end
+    end]]
 end
 
 Gui.GetModGuiFrame = function(player)
@@ -69,3 +69,5 @@ Gui.GuiUpdatePlayerWithData = function(player, warningLocalisedString, targetLoc
         GUIUtil.DestroyElementInPlayersReferenceStorage(playerIndex, "biterhuntgroup", "main", "frame")
     end
 end
+
+return Gui

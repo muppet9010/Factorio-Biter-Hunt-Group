@@ -1,5 +1,5 @@
 local SharedData = {}
 
-SharedData.BiterHuntGroupState = {waiting = "waiting", warning = "warning", groundMovement = "groundMovement", preBitersSpawnEffect = "preBitersSpawnEffect", bitersActive = "bitersActive"}
+SharedData.biterHuntGroupState = {waiting = "waiting", warning = "warning", groundMovement = "groundMovement", preBitersSpawnEffect = "preBitersSpawnEffect", spawnBiters = "spawnBiters", bitersActive = "bitersActive"}
 
 return SharedData

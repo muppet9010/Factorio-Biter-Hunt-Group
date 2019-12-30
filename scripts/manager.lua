@@ -10,50 +10,56 @@ local Settings = require("utility/settings-manager")
 local SharedData = require("scripts/shared-data")
 local Interfaces = require("utility/interfaces")
 local Manager = {}
-local testing = false
-local BiterHuntGroup = {}
+local testing = true
+local BiterHuntGroup = {} -- TODO: I shouldn't be needed
 
-local function CreateGlobalDataForGroupId(groupId)
-    global.Groups[groupId] = global.Groups[groupId] or {}
-    local group = global.Groups[groupId]
+local function CreateGlobalGroup(groupId)
+    global.groups[groupId] = global.groups[groupId] or {}
+    local group = global.groups[groupId]
     group.groupId = group.groupId or groupId
-    group.Results = group.Results or {}
-    group.Packs = group.Packs or {}
+    group.results = group.results or {}
+    group.packs = group.packs or {}
     group.lastPackId = group.lastPackId or 0
+    return group
 end
 
 Manager.CreateGlobals = function()
-    global.GroupsCount = global.GroupsCount or 0
-    global.Groups = global.Groups or {}
+    global.groupsCount = global.groupsCount or 0
+    global.groups = global.groups or {}
 end
 
 Manager.OnLoad = function()
     Commands.Register("biters_attack_now", {"api-description.biter_hunt_group-biters_attack_now"}, Manager.MakeBitersAttackNow, true)
-    Events.RegisterHandler(defines.events.on_player_joined_game, "BiterHuntGroupManager", Manager.OnPlayerJoinedGame)
-    Events.RegisterHandler(defines.events.on_player_died, "BiterHuntGroupManager", Manager.OnPlayerDied)
-    Events.RegisterHandler(defines.events.on_player_left_game, "BiterHuntGroupManager", Manager.OnPlayerLeftGame)
-    Commands.Register("biters_write_out_hunt_group_results", {"api-description.biter_hunt_group-biters_write_out_hunt_group_results"}, Manager.WriteOutHuntGroupResults, false)
-    Events.RegisterHandler(defines.events.on_player_driving_changed_state, "BiterHuntGroupManager", Manager.OnPlayerDrivingChangedState)
+    --Events.RegisterHandler(defines.events.on_player_joined_game, "BiterHuntGroupManager", Manager.OnPlayerJoinedGame)
+    --Events.RegisterHandler(defines.events.on_player_died, "BiterHuntGroupManager", Manager.OnPlayerDied)
+    --Events.RegisterHandler(defines.events.on_player_left_game, "BiterHuntGroupManager", Manager.OnPlayerLeftGame)
+    --Commands.Register("biters_write_out_hunt_group_results", {"api-description.biter_hunt_group-biters_write_out_hunt_group_results"}, Manager.WriteOutHuntGroupResults, false)
+    --Events.RegisterHandler(defines.events.on_player_driving_changed_state, "BiterHuntGroupManager", Manager.OnPlayerDrivingChangedState)
     Interfaces.RegisterInterface("Manager.GetGlobalSettingForId", Manager.GetGlobalSettingForId)
     Interfaces.RegisterInterface("Manager.ScheduleNextPackForGroup", Manager.ScheduleNextPackForGroup)
 end
 
 Manager.OnStartup = function()
-    for groupId = 1, global.GroupsCount do
-        if not EventScheduler.IsEventScheduled("Controller.ActionPack", groupId) then
-            Manager.ScheduleNextPackForGroup(groupId)
+    for groupId = 1, global.groupsCount do
+        local group = CreateGlobalGroup(groupId)
+        if #group.packs == 0 then
+            Manager.ScheduleNextPackForGroup(group)
         end
     end
     Gui.GuiRecreateAll()
 end
 
 Manager.GetGlobalSettingForId = function(groupId, settingName)
-    return global.Groups[groupId].Settings[settingName] or global.Groups[0].Settings[settingName]
+    local groupContainer, settingsContainerName = global.groups, "settings"
+    return Settings.GetSettingValueForId(groupContainer, groupId, settingsContainerName, settingName)
 end
 
+--[[
+    Setting Names: groupFrequencyRangeLowTicks, groupFrequencyRangeHighTicks, groupSize, evolutionBonus, groupSpawnRadius, tunnellingTicks, warningTicks
+]]
 Manager.OnRuntimeModSettingChanged = function(event)
     --TODO if settings change mid game we need to add/remove scheduled group events
-    local groupContainer, settingsContainerName = global.Groups, "Settings"
+    local groupContainer, settingsContainerName = global.groups, "settings"
 
     if event == nil or event.setting == "group_frequency_range_low_minutes" then
         Settings.HandleSettingWithArrayOfValues(
@@ -148,14 +154,14 @@ Manager.OnRuntimeModSettingChanged = function(event)
     end
 
     if testing then
-        global.Groups[0].Settings.groupFrequencyRangeLowTicks = 600
-        global.Groups[0].Settings.groupFrequencyRangeHighTicks = 600
-        global.Groups[0].Settings.warningTicks = 120
-        global.Groups[0].Settings.tunnellingTicks = 120
-        global.Groups[0].Settings.groupSize = 2
-        global.Groups[0].Settings.groupSpawnRadius = 5
-        global.Groups[1] = nil
-        global.Groups[2] = nil
+        global.groups[0].settings.groupFrequencyRangeLowTicks = 120
+        global.groups[0].settings.groupFrequencyRangeHighTicks = 120
+        global.groups[0].settings.warningTicks = 120
+        global.groups[0].settings.tunnellingTicks = 120
+        global.groups[0].settings.groupSize = 2
+        global.groups[0].settings.groupSpawnRadius = 5
+        global.groups[1] = nil
+        global.groups[2] = nil
     end
 
     for groupId, group in pairs(groupContainer) do
@@ -165,8 +171,8 @@ Manager.OnRuntimeModSettingChanged = function(event)
         end
     end
 
-    --Logging.LogPrint(Utils.TableContentsToJSON(global.Groups, "global.Groups"))
-    global.GroupsCount = Utils.GetMaxKey(global.Groups)
+    --Logging.LogPrint(Utils.TableContentsToJSON(global.groups, "global.groups"))
+    global.groupsCount = math.max(Utils.GetMaxKey(global.groups), 1)
 end
 
 Manager.OnPlayerJoinedGame = function(event)
@@ -174,19 +180,17 @@ Manager.OnPlayerJoinedGame = function(event)
     Gui.GuiRecreate(player)
 end
 
-Manager.ScheduleNextPackForGroup = function(groupId)
-    CreateGlobalDataForGroupId(groupId)
-    local group = global.Groups[groupId]
-    local nextPackActionTick = game.tick + math.random(Manager.GetGlobalSettingForId(groupId, "groupFrequencyRangeLowTicks"), Manager.GetGlobalSettingForId(groupId, "groupFrequencyRangeHighTicks"))
-    Interfaces.Call("Controller.CreatePack", groupId)
-    EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.ActionPack", groupId, {groupId = groupId, packId = group.lastPackId})
+Manager.ScheduleNextPackForGroup = function(group)
+    local nextPackActionTick = game.tick + math.random(Manager.GetGlobalSettingForId(group.id, "groupFrequencyRangeLowTicks"), Manager.GetGlobalSettingForId(group.id, "groupFrequencyRangeHighTicks"))
+    local pack = Interfaces.Call("Controller.CreatePack", group)
+    EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_Warning", group.id, {pack = pack})
 end
 
 --[[
     TODO: FIX LATER
 BiterHuntGroup.MakeBitersAttackNow = function()
     EventScheduler.RemoveScheduledEvents("Controller.ActionPack", groupId)
-    global.BiterHuntGroup.nextGroupTick = game.tick + global.Settings.warningTicks
+    global.BiterHuntGroup.nextGroupTick = game.tick + global.settings.warningTicks
     BiterHuntGroup.UpdateNextGroupTickWarning()
 end
 ]]
