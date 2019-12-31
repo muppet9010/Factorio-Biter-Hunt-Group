@@ -1,9 +1,6 @@
 --Controller manages a biter hunt group once triggered and calls back to the managers supplied functions when needed.
 --Group is the reoccuring collection of a group of settings. A Pack is a specific instance of a group.
 
---TODO:
---  change how win/lose and pack data is handled and kept. remove old data ASAP and simplify logic where possible.
-
 local Controller = {}
 local Utils = require("utility/utils")
 local Logging = require("utility/logging")
@@ -44,6 +41,7 @@ Controller.CreatePack = function(group)
     pack.surface = nil
     pack.groundMovementEffects = nil
     pack.hasBeenTargetedAtSpawn = false
+    pack.finalResultReached = false
     pack.warningTicks = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "warningTicks")
     pack.packSize = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "groupSize")
     pack.spawnRadius = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "groupSpawnRadius")
@@ -55,7 +53,6 @@ Controller.CreatePack = function(group)
 end
 
 Controller.RemoveActiveBitersPack = function(pack)
-    --TODO: If this isn't an active biter pack yet and we have reached this then the pack is completed, but should still be progressed and sent towards spawn. Its result should have been set and so should be overridden.
     if pack.state ~= SharedData.biterHuntGroupState.bitersActive then
         return
     end
@@ -114,7 +111,7 @@ Controller.PackAction_BitersActive = function(event)
             pack.units[i] = nil
         end
     end
-    if Utils.GetTableNonNilLength(pack.units) == 0 then
+    if #pack.units == 0 then
         Controller.RecordResult("bitersDied", pack)
         Controller.RemoveActiveBitersPack(pack)
     else
@@ -287,7 +284,7 @@ end
 
 Controller.CommandEnemies = function(pack)
     local debug = false
-    if pack.hasBeenTargetedAtSpawn then
+    if pack.hasBeenTargetedAtSpawn or #pack.units == 0 then
         return
     end
     local targetEntity = pack.targetEntity
@@ -348,9 +345,7 @@ end
 Controller.TargetBitersAtSpawn = function(pack)
     game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter] rampaging towards spawn now!")
     pack.targetEntity = nil
-    if Utils.GetTableNonNilLength(pack.units) > 0 then
-        Controller.CommandEnemies(pack)
-    end
+    Controller.CommandEnemies(pack)
     Controller.RemoveActiveBitersPack(pack)
 end
 
@@ -360,21 +355,29 @@ Controller.TargetBitersAtSpawnFromError = function(pack)
 end
 
 Controller.RecordResult = function(outcome, pack)
-    --TODO: draw doesn't occur anymore and no max hunt time setting presently. May end up with packs that are stuck forever and the game doesn't auto tidy up as we prevented it.
+    if pack.finalResultReached then
+        return
+    end
     if outcome == "bitersDied" then
         game.print("[img=entity.medium-biter-corpse]      [img=entity.character]" .. pack.targetName .. " won")
+        pack.finalResultReached = true
     elseif outcome == "playerDied" then
         game.print("[img=entity.medium-biter]      [img=entity.character-corpse]" .. pack.targetName .. " lost")
+        pack.finalResultReached = true
     elseif outcome == "draw" then
+        --not reached at present
         game.print("[img=entity.medium-biter]      [img=entity.character]" .. pack.targetName .. " draw")
+        pack.finalResultReached = true
     elseif outcome == "playerLeft" then
         game.print("[img=entity.medium-biter]      [img=entity.character]" .. pack.targetName .. " fled like a coward")
+        pack.finalResultReached = true
     elseif outcome == "hunting" then
         local biterTargetPos = Controller.GetPositionForTarget(pack)
         game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter]" .. " hunting " .. pack.targetName .. " at [gps=" .. math.floor(biterTargetPos.x) .. "," .. math.floor(biterTargetPos.y) .. "]")
     else
         Logging.LogPrint("ERROR: unrecognised result outcome: " .. outcome)
         outcome = "error"
+        pack.finalResultReached = true
     end
     local result = pack.group.results[pack.id]
     result.outcome = outcome
