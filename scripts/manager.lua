@@ -5,13 +5,12 @@ local Logging = require("utility/logging")
 local Commands = require("utility/commands")
 local Events = require("utility/events")
 local EventScheduler = require("utility/event-scheduler")
-local Gui = require("scripts/gui")
 local Settings = require("utility/settings-manager")
 local Interfaces = require("utility/interfaces")
 local Manager = {}
 
-local singleGroupTesting = false
-local doubleGroupTesting = true
+local testing_singleGroup = true
+local testing_doubleGroup = false
 
 local function CreateGlobalGroup(groupId)
     global.groups[groupId] = global.groups[groupId] or {}
@@ -43,7 +42,7 @@ Manager.OnStartup = function()
             Manager.ScheduleNextPackForGroup(group)
         end
     end
-    Gui.RecreateAll()
+    Interfaces.Call("Gui.RecreateAll")
 end
 
 Manager.GetGlobalSettingForId = function(groupId, settingName)
@@ -156,9 +155,9 @@ Manager.OnRuntimeModSettingChanged = function(event)
         Settings.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_hunting_text", "string", "Pack currently hunting __1__ on __2__", groupContainer, settingsContainerName, "huntingText")
     end
 
-    if singleGroupTesting then
-        global.groups[0].settings.groupFrequencyRangeLowTicks = 60 * 1
-        global.groups[0].settings.groupFrequencyRangeHighTicks = 60 * 1
+    if testing_singleGroup then
+        global.groups[0].settings.groupFrequencyRangeLowTicks = 60 * 10
+        global.groups[0].settings.groupFrequencyRangeHighTicks = 60 * 10
         global.groups[0].settings.warningTicks = 120
         global.groups[0].settings.tunnellingTicks = 120
         global.groups[0].settings.groupSize = 2
@@ -166,9 +165,9 @@ Manager.OnRuntimeModSettingChanged = function(event)
         global.groups[1] = nil
         global.groups[2] = nil
     end
-    if doubleGroupTesting then
-        global.groups[0].settings.groupFrequencyRangeLowTicks = 60 * 1
-        global.groups[0].settings.groupFrequencyRangeHighTicks = 60 * 1
+    if testing_doubleGroup then
+        global.groups[0].settings.groupFrequencyRangeLowTicks = 60 * 10
+        global.groups[0].settings.groupFrequencyRangeHighTicks = 60 * 10
         global.groups[0].settings.warningTicks = 120
         global.groups[0].settings.tunnellingTicks = 120
         global.groups[0].settings.groupSize = 2
@@ -188,24 +187,24 @@ end
 
 Manager.OnPlayerJoinedGame = function(event)
     local player = game.get_player(event.player_index)
-    Gui.Recreate(player)
+    Interfaces.Call("Gui.RecreatePlayer", player)
 end
 
 Manager.ScheduleNextPackForGroup = function(group)
     local nextPackActionTick = game.tick + math.random(Manager.GetGlobalSettingForId(group.id, "groupFrequencyRangeLowTicks"), Manager.GetGlobalSettingForId(group.id, "groupFrequencyRangeHighTicks"))
     local pack = Interfaces.Call("Controller.CreatePack", group)
-    local uniqueId = group.id .. "_" .. pack.id
+    local uniqueId = Interfaces.Call("Controller.GenerateUniqueId", group.id, pack.id)
     EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_Warning", uniqueId, {pack = pack})
 end
 
 Manager.MakeBiterGroupPackAttackNow = function(group)
     local pack = group.packs[group.lastPackId]
-    --Should never happen with current mod functionality. If we create one we need to avoid it creating its own cycle.
-    --[[if pack.state ~= SharedData.biterHuntGroupState.waiting then
+    --Should never happen with current mod functionality. If we create a pack for a group with no random spawn time via command we need to avoid it creating its own cycle.
+    --[[if pack.state ~= SharedData.biterHuntGroupState.scheduled then
         Logging.LogPrint("adding new pack")
         pack = Interfaces.Call("Controller.CreatePack", group)
     end]]
-    local uniqueId = group.id .. "_" .. pack.id
+    local uniqueId = Interfaces.Call("Controller.GenerateUniqueId", group.id, pack.id)
     EventScheduler.RemoveScheduledEvents("Controller.PackAction_Warning", uniqueId)
     EventScheduler.ScheduleEvent(game.tick, "Controller.PackAction_Warning", uniqueId, {pack = pack})
 end

@@ -2,6 +2,7 @@ local Gui = {}
 local GUIUtil = require("utility/gui-util")
 local Constants = require("constants")
 local SharedData = require("scripts/shared-data")
+local Interfaces = require("utility/interfaces")
 --local Utils = require("utility/utils")
 --local Logging = require("utility/logging")
 
@@ -23,22 +24,28 @@ local function GetIncommingFrame(mainFrame)
     return frameElement
 end
 
-Gui.Create = function(player)
+Gui.OnLoad = function()
+    Interfaces.RegisterInterface("Gui.RecreateAll", Gui.RecreateAll)
+    Interfaces.RegisterInterface("Gui.RecreatePlayer", Gui.RecreatePlayer)
+    Interfaces.RegisterInterface("Gui.UpdateAllConnectedPlayers", Gui.UpdateAllConnectedPlayers)
+end
+
+Gui.CreatePlayer = function(player)
     Gui.UpdatePlayer(player.index)
 end
 
-Gui.Destroy = function(player)
+Gui.DestroyPlayer = function(player)
     GUIUtil.DestroyPlayersReferenceStorage(player.index, "biterhuntgroup")
 end
 
-Gui.Recreate = function(player)
-    Gui.Destroy(player)
-    Gui.Create(player)
+Gui.RecreatePlayer = function(player)
+    Gui.DestroyPlayer(player)
+    Gui.CreatePlayer(player)
 end
 
 Gui.RecreateAll = function()
     for _, player in pairs(game.players) do
-        Gui.Recreate(player)
+        Gui.RecreatePlayer(player)
     end
 end
 
@@ -53,7 +60,7 @@ Gui.UpdatePlayer = function(playerIndex)
     for groupId = 1, global.groupsCount do
         local group = global.groups[groupId]
         for _, pack in pairs(group.packs) do
-            local uniqueId = group.id .. "_" .. pack.id
+            local uniqueId = Interfaces.Call("Controller.GenerateUniqueId", group.id, pack.id)
             if pack.targetName ~= nil then
                 local huntingString = string.gsub(string.gsub(pack.huntingText, "__1__", pack.targetName), "__2__", pack.surface.name)
                 GUIUtil.AddElement({parent = huntingFrameElement, name = "target" .. uniqueId, type = "label", caption = huntingString, style = "muppet_bold_text"})

@@ -10,12 +10,11 @@ local Logging = require("utility/logging")
 local EventScheduler = require("utility/event-scheduler")
 local Constants = require("constants")
 local SharedData = require("scripts/shared-data")
-local Gui = require("scripts/gui")
 local Interfaces = require("utility/interfaces")
 local Events = require("utility/events")
 
 local biterHuntGroupPreTunnelEffectTime = 10
-local testing_only1PackPerGroup = true
+local testing_only1PackPerGroup = false
 
 Controller.OnLoad = function()
     EventScheduler.RegisterScheduledEventType("Controller.PackAction_Warning", Controller.PackAction_Warning)
@@ -27,6 +26,7 @@ Controller.OnLoad = function()
     Events.RegisterHandler(defines.events.on_player_died, "BiterHuntGroupManager", Controller.OnPlayerDied)
     Events.RegisterHandler(defines.events.on_player_left_game, "BiterHuntGroupManager", Controller.OnPlayerLeftGame)
     Events.RegisterHandler(defines.events.on_player_driving_changed_state, "BiterHuntGroupManager", Controller.OnPlayerDrivingChangedState)
+    Interfaces.RegisterInterface("Controller.GenerateUniqueId", Controller.GenerateUniqueId)
 end
 
 Controller.CreatePack = function(group)
@@ -35,14 +35,15 @@ Controller.CreatePack = function(group)
     pack.id = group.lastPackId
     pack.group = group
     group.packs[pack.id] = pack
-    pack.state = SharedData.biterHuntGroupState.waiting
+    group.results[pack.id] = {outcome = "scheduled", targetName = nil}
+    pack.state = SharedData.biterHuntGroupState.scheduled
     pack.units = {}
-    pack.currentlyTargetedAtSpawn = nil
     pack.targetPlayerID = nil
     pack.targetEntity = nil
     pack.targetName = nil
     pack.surface = nil
     pack.groundMovementEffects = nil
+    pack.hasBeenTargetedAtSpawn = false
     pack.warningTicks = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "warningTicks")
     pack.packSize = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "groupSize")
     pack.spawnRadius = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "groupSpawnRadius")
@@ -53,10 +54,23 @@ Controller.CreatePack = function(group)
     return pack
 end
 
+Controller.RemoveActiveBitersPack = function(pack)
+    --TODO: If this isn't an active biter pack yet and we have reached this then the pack is completed, but should still be progressed and sent towards spawn. Its result should have been set and so should be overridden.
+    if pack.state ~= SharedData.biterHuntGroupState.bitersActive then
+        return
+    end
+    local packId = pack.id
+    local group = pack.group
+    group.packs[packId] = nil
+    Interfaces.Call("Gui.UpdateAllConnectedPlayers")
+    local uniqueId = Controller.GenerateUniqueId(group.id, packId)
+    EventScheduler.RemoveScheduledEvents("Controller.PackAction_BitersActive", uniqueId)
+end
+
 Controller.PackAction_Warning = function(event)
     local tick, uniqueId, pack = event.tick, event.instanceId, event.data.pack
     pack.state = SharedData.biterHuntGroupState.warning
-    Gui.UpdateAllConnectedPlayers()
+    Interfaces.Call("Gui.UpdateAllConnectedPlayers")
     local nextPackActionTick = tick + pack.warningTicks
     EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_GroundMovement", uniqueId, {pack = pack})
 end
@@ -65,17 +79,11 @@ Controller.PackAction_GroundMovement = function(event)
     local tick, uniqueId, pack = event.tick, event.instanceId, event.data.pack
     local group = pack.group
     pack.state = SharedData.biterHuntGroupState.groundMovement
-    if group.results[pack.id] ~= nil and group.results[pack.id].playerWin == nil then
-        game.print("[img=entity.medium-biter]      [img=entity.character]" .. pack.targetName .. " draw")
-    end
-    Controller.ClearGlobals(pack)
-    if testing_only1PackPerGroup ~= true then
+    if not testing_only1PackPerGroup then
         Interfaces.Call("Manager.ScheduleNextPackForGroup", group)
     end
     Controller.SelectTarget(pack)
-    local biterTargetPos = Controller.GetPositionForTarget(pack)
-    game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter]" .. " hunting " .. pack.targetName .. " at [gps=" .. math.floor(biterTargetPos.x) .. "," .. math.floor(biterTargetPos.y) .. "]")
-    group.results[pack.id] = {playerWin = nil, targetName = pack.targetName}
+    Controller.RecordResult("hunting", pack)
     Controller.CreateGroundMovement(pack)
     local nextPackActionTick = tick + pack.tunnellingTicks - biterHuntGroupPreTunnelEffectTime
     EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_PreSpawnEffect", uniqueId, {pack = pack})
@@ -92,7 +100,6 @@ end
 Controller.PackAction_SpawnBiters = function(event)
     local tick, uniqueId, pack = event.tick, event.instanceId, event.data.pack
     pack.state = SharedData.biterHuntGroupState.spawnBiters
-    Controller.EnsureValidateTarget(pack)
     Controller.SpawnEnemies(pack)
     Controller.CommandEnemies(pack)
     local nextPackActionTick = tick + 60
@@ -101,7 +108,6 @@ end
 
 Controller.PackAction_BitersActive = function(event)
     local tick, uniqueId, pack = event.tick, event.instanceId, event.data.pack
-    local group = pack.group
     pack.state = SharedData.biterHuntGroupState.bitersActive
     for i, biter in pairs(pack.units) do
         if not biter.valid then
@@ -109,11 +115,8 @@ Controller.PackAction_BitersActive = function(event)
         end
     end
     if Utils.GetTableNonNilLength(pack.units) == 0 then
-        if group.results[pack.id].playerWin == nil then
-            group.results[pack.id].playerWin = true
-            game.print("[img=entity.medium-biter-corpse]      [img=entity.character]" .. pack.targetName .. " won")
-        end
-        group.packs[pack.id] = nil
+        Controller.RecordResult("bitersDied", pack)
+        Controller.RemoveActiveBitersPack(pack)
     else
         Controller.CommandEnemies(pack)
         local nextPackActionTick = tick + 60
@@ -121,13 +124,8 @@ Controller.PackAction_BitersActive = function(event)
     end
 end
 
-Controller.ClearGlobals = function(pack)
-    --TODO: should this actually destroy the pack as only reached post win/loss outcome?
-    pack.targetPlayerID = nil
-    pack.targetEntity = nil
-    pack.targetName = nil
-    pack.unitsTargetedAtSpawn = nil
-    Gui.UpdateAllConnectedPlayers()
+Controller.GenerateUniqueId = function(groupId, packId)
+    return groupId .. "_" .. packId
 end
 
 Controller.ValidSurface = function(surface)
@@ -162,15 +160,7 @@ Controller.SelectTarget = function(pack)
         Controller.SetSpawnAsTarget(pack)
         pack.surface = game.surfaces[1]
     end
-    Gui.UpdateAllConnectedPlayers()
-end
-
-Controller.EnsureValidateTarget = function(pack)
-    local targetEntity = pack.targetEntity
-    if targetEntity ~= nil and (not targetEntity.valid) then
-        Controller.SetSpawnAsTarget(pack)
-        Gui.UpdateAllConnectedPlayers()
-    end
+    Interfaces.Call("Gui.UpdateAllConnectedPlayers")
 end
 
 Controller.SetSpawnAsTarget = function(pack)
@@ -182,7 +172,7 @@ end
 Controller.GetPositionForTarget = function(pack)
     local surface = pack.surface
     local targetEntity = pack.targetEntity
-    if targetEntity ~= nil and targetEntity.valid then
+    if targetEntity ~= nil then
         return targetEntity.position
     else
         return game.forces["player"].get_spawn_position(surface)
@@ -297,23 +287,22 @@ end
 
 Controller.CommandEnemies = function(pack)
     local debug = false
+    if pack.hasBeenTargetedAtSpawn then
+        return
+    end
     local targetEntity = pack.targetEntity
     if targetEntity ~= nil and not targetEntity.valid then
-        Controller.TargetBitersAtSpawnFromError(pack)
         Logging.LogPrint("ERROR - Biter target entity is invalid from command enemies - REPORT AS ERROR")
+        Controller.TargetBitersAtSpawnFromError(pack)
         return
     end
     local attackCommand
     if targetEntity ~= nil then
         Logging.Log("CommandEnemies - targetEntity not nil - targetEntity: " .. targetEntity.name, debug)
-        pack.unitsTargetedAtSpawn = false
         attackCommand = {type = defines.command.attack, target = targetEntity, distraction = defines.distraction.none}
     else
         Logging.Log("CommandEnemies - targetEntity is nil - target spawn", debug)
-        if pack.unitsTargetedAtSpawn then
-            return
-        end
-        pack.unitsTargetedAtSpawn = true
+        pack.hasBeenTargetedAtSpawn = true
         attackCommand = {type = defines.command.attack_area, destination = Controller.GetPositionForTarget(pack), radius = 20, distraction = defines.distraction.by_anything}
     end
     for i, unit in pairs(pack.units) do
@@ -357,17 +346,39 @@ Controller.CommandEnemies = function(pack)
 end
 
 Controller.TargetBitersAtSpawn = function(pack)
+    game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter] rampaging towards spawn now!")
     pack.targetEntity = nil
-    Controller.CommandEnemies(pack)
-    Controller.ClearGlobals(pack)
+    if Utils.GetTableNonNilLength(pack.units) > 0 then
+        Controller.CommandEnemies(pack)
+    end
+    Controller.RemoveActiveBitersPack(pack)
 end
 
 Controller.TargetBitersAtSpawnFromError = function(pack)
-    local group = pack.group
-    if group.results[pack.id].playerWin == nil then
-        group.results[pack.id].playerWin = true
-    end
+    Controller.RecordResult("error", pack)
     Controller.TargetBitersAtSpawn(pack)
+end
+
+Controller.RecordResult = function(outcome, pack)
+    --TODO: draw doesn't occur anymore and no max hunt time setting presently. May end up with packs that are stuck forever and the game doesn't auto tidy up as we prevented it.
+    if outcome == "bitersDied" then
+        game.print("[img=entity.medium-biter-corpse]      [img=entity.character]" .. pack.targetName .. " won")
+    elseif outcome == "playerDied" then
+        game.print("[img=entity.medium-biter]      [img=entity.character-corpse]" .. pack.targetName .. " lost")
+    elseif outcome == "draw" then
+        game.print("[img=entity.medium-biter]      [img=entity.character]" .. pack.targetName .. " draw")
+    elseif outcome == "playerLeft" then
+        game.print("[img=entity.medium-biter]      [img=entity.character]" .. pack.targetName .. " fled like a coward")
+    elseif outcome == "hunting" then
+        local biterTargetPos = Controller.GetPositionForTarget(pack)
+        game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter]" .. " hunting " .. pack.targetName .. " at [gps=" .. math.floor(biterTargetPos.x) .. "," .. math.floor(biterTargetPos.y) .. "]")
+    else
+        Logging.LogPrint("ERROR: unrecognised result outcome: " .. outcome)
+        outcome = "error"
+    end
+    local result = pack.group.results[pack.id]
+    result.outcome = outcome
+    result.targetName = pack.targetName
 end
 
 Controller.GetPacksPlayerIdIsATargetFor = function(playerId)
@@ -386,8 +397,7 @@ end
 Controller.OnPlayerDied = function(event)
     local playerId = event.player_index
     for _, pack in pairs(Controller.GetPacksPlayerIdIsATargetFor(playerId)) do
-        pack.group.results[pack.id].playerWin = false
-        game.print("[img=entity.medium-biter]      [img=entity.character-corpse]" .. tostring(pack.targetName) .. " lost")
+        Controller.RecordResult("playerDied", pack)
         Controller.TargetBitersAtSpawn(pack)
     end
 end
@@ -395,8 +405,7 @@ end
 Controller.OnPlayerLeftGame = function(event)
     local playerId = event.player_index
     for _, pack in pairs(Controller.GetPacksPlayerIdIsATargetFor(playerId)) do
-        pack.group.results[pack.id].playerWin = false
-        game.print("[img=entity.medium-biter]      [img=entity.character]" .. tostring(pack.targetName) .. " fled like a coward")
+        Controller.RecordResult("playerLeft", pack)
         Controller.TargetBitersAtSpawn(pack)
     end
 end
