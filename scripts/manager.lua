@@ -131,7 +131,22 @@ Manager.OnRuntimeModSettingChanged = function(event)
     if event == nil or event.setting == "biter_hunt_group-group_hunting_text" then
         Manager.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_hunting_text", "string", "Pack currently hunting __1__ on __2__", "huntingText")
     end
-
+    if event == nil or event.setting == "biter_hunt_group-group_players_name_targets" then
+        Manager.HandleSettingWithArrayOfValues(
+            "global",
+            "biter_hunt_group-group_players_name_targets",
+            "table",
+            {},
+            "playerNameList",
+            function(value)
+                if value == nil or value == "" then
+                    return {}
+                else
+                    return value
+                end
+            end
+        )
+    end
     if testing_singleGroup then
         global.defaultSettings.groupFrequencyRangeLowTicks = 60 * 10
         global.defaultSettings.groupFrequencyRangeHighTicks = 60 * 10

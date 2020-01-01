@@ -1,12 +1,12 @@
 # Factorio-Biter-Hunt-Group
 
-At a random configurable time, a pack of biters will become enraged against a specific player. They will erupt from the ground around the player and hunt them relentlessly. Multiple concurrent group configurations for packs are supported.
+At a random configurable time, a pack of biters will become enraged against a random specific player. They will erupt from the ground around the player and hunt them relentlessly. Multiple concurrent group configurations for packs are supported.
 
 
 Detailed Explanation
 -----------
 
-The frequency of biter packs attacking is configurable with a lower and upper time range. There will be a time configurable GUI warning to all players shown that a pack is incoming, but the targeted player won't be revealed. At the end of the warning time, the target player will be randomly selected from all players who are connected and alive (has a body or is in a vehicle). They will be listed in a small GUI and a chat message will be sent to all players with a link to their location so their demise can be watched. If there are no suitable players anywhere the biters will tunnel around spawn on the nauvis (default) surface and destroy everything. At this point the next pack will be scheduled for a configured random future time using the current settings.
+The frequency of biter packs attacking is configurable with a lower and upper time range. There will be a time configurable GUI warning to all players shown that a pack is incoming, but the targeted player won't be revealed. At the end of the warning time, the target player will be randomly selected from either a list of configurable players or all players who are connected and alive (has a body or is in a vehicle). They will be listed in a small GUI and a chat message will be sent to all players with a link to their location so their demise can be watched. If there are no suitable players anywhere the biters will tunnel around spawn on the nauvis (default) surface and destroy everything. At this point the next pack will be scheduled for a configured random future time using the current settings.
 
 The player/spawn will be surrounded in a circle by a configurable number of tunnelling biter effects at a configured range. After a configurable time, the tunnelling effects will finish and the biters will burst forth. They will be evolution appropriate with a configurable added evolution factor. They will pursue the targeted player ignoring all other distractions. Should the player enter or exit vehicles they will continue the pursuit.
 
@@ -17,7 +17,12 @@ Mutliple Group Configurations
 
 The mod supports the simplier usage of a single group with packs behaving as covered in the Detailed Explanation above. In this case each mod setting should have just 1 setting entered in the natural way for numbers or text.
 
-The mod also supports multiple groups to be configured and each have active packs simultaniously (N groups with N active packs). This means each group's packs follows the Detailed Explanation above with their own settings. This is configured by each mod setting accepting an array [] of values in JSON format. Each sequential item in the array being applied to a corrisponding group. Should any mod setting include an array entry for a group then that group will be generated. Example, a mod setting with the value of [2,10,3] would create 3 groups each having their sequential values. If a mod setting only has 1 value then it is taken as a global default value and applied to all groups. In the case of a mismatch of group quantity between multiple mod settings the mod's default settings are used when needed to avoid errors, i.e. one mod setting has 2 array entries ([1,2]) and another mod setting has 3 array entries ([1,2,3]). A group's ID is just its order in a mod setting array and may be needed for some commands.
+The mod also supports multiple groups to be configured and each have active packs simultaniously (N groups with N active packs). This means each group's packs follows the Detailed Explanation above with their own settings. This is configured by each mod setting accepting an array [] of values in JSON format. Each sequential item in the array being applied to a corrisponding group. Should any mod setting include an array entry for a group then that group will be generated.
+Example, a mod setting with the value of [2,10,3] would create 3 groups each having their sequential values.
+
+If a mod setting only has 1 value then it is taken as a global default value and applied to all groups. In the case of a mismatch of group quantity between multiple mod settings the mod's default settings are used when needed to avoid errors, i.e. one mod setting has 2 array entries ([1,2]) and another mod setting has 3 array entries ([1,2,3]). A group's ID is just its order in a mod setting array and may be needed for some commands.
+
+The mod settings which take a list like "Players Targeted" expect an array or arrays when multiple groups have unique settings. i.e. [ ["player1", "player2"], ["player3"], [] ]. In this case group 1 would target players name "player1" and "player2", group 2 would only target "player3" and group 3 would target all players on the server.
 
 
 Advised Other Mods

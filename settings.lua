@@ -62,6 +62,14 @@ data:extend(
             default_value = "Pack currently hunting __1__ on __2__",
             setting_type = "runtime-global",
             order = "1009"
+        },
+        {
+            name = "biter_hunt_group-group_players_name_targets",
+            type = "string-setting",
+            default_value = "",
+            allow_blank = true,
+            setting_type = "runtime-global",
+            order = "1010"
         }
     }
 )

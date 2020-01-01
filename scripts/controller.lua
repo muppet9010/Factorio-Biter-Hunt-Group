@@ -50,6 +50,7 @@ Controller.CreatePack = function(group)
     pack.tunnellingTicks = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "tunnellingTicks")
     pack.warningText = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "warningText")
     pack.huntingText = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "huntingText")
+    pack.validTargetPlayerNameList = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "playerNameList")
     return pack
 end
 
@@ -157,8 +158,10 @@ Controller.SelectTarget = function(pack)
     local players = game.connected_players
     local validPlayers = {}
     for _, player in pairs(players) do
-        if (player.vehicle ~= nil or player.character ~= nil) and Controller.ValidSurface(player.surface) then
-            table.insert(validPlayers, player)
+        if (#pack.validTargetPlayerNameList == 0) or (#pack.validTargetPlayerNameList > 0 and Utils.GetTableKeyWithValue(pack.validTargetPlayerNameList, player.name) ~= nil) then
+            if (player.vehicle ~= nil or player.character ~= nil) and Controller.ValidSurface(player.surface) then
+                table.insert(validPlayers, player)
+            end
         end
     end
     if #validPlayers >= 1 then
