@@ -9,22 +9,12 @@ local Settings = require("utility/settings-manager")
 local Interfaces = require("utility/interfaces")
 local Manager = {}
 
-local testing_singleGroup = true
+local testing_singleGroup = false
 local testing_doubleGroup = false
 
-local function CreateGlobalGroup(groupId)
-    global.groups[groupId] = global.groups[groupId] or {}
-    local group = global.groups[groupId]
-    group.id = group.id or groupId
-    group.results = group.results or {}
-    group.packs = group.packs or {}
-    group.lastPackId = group.lastPackId or 0
-    return group
-end
-
 Manager.CreateGlobals = function()
-    global.groupsCount = global.groupsCount or 0
     global.groups = global.groups or {}
+    global.defaultSettings = global.defaultSettings or {}
 end
 
 Manager.OnLoad = function()
@@ -36,35 +26,30 @@ Manager.OnLoad = function()
 end
 
 Manager.OnStartup = function()
-    for groupId = 1, global.groupsCount do
-        local group = CreateGlobalGroup(groupId)
-        if #group.packs == 0 then
-            Manager.ScheduleNextPackForGroup(group)
-        end
-    end
     Interfaces.Call("Gui.RecreateAll")
+    Manager.UpdateGroupsFromSettings()
 end
 
 Manager.GetGlobalSettingForId = function(groupId, settingName)
-    local groupContainer, settingsContainerName = global.groups, "settings"
-    return Settings.GetSettingValueForId(groupContainer, groupId, settingsContainerName, settingName)
+    local groupContainer, settingsContainerName, defaultSettingsContainer = global.groups, "settings", global.defaultSettings
+    return Settings.GetSettingValueForId(groupContainer, groupId, settingsContainerName, settingName, defaultSettingsContainer)
+end
+
+Manager.HandleSettingWithArrayOfValues = function(settingType, settingName, expectedValueType, defaultValue, globalSettingName, valueHandlingFunction)
+    local globalGroupsContainer, globalSettingContainerName, defaultSettingsContainer = global.groups, "settings", global.defaultSettings
+    Settings.HandleSettingWithArrayOfValues(settingType, settingName, expectedValueType, defaultSettingsContainer, defaultValue, globalGroupsContainer, globalSettingContainerName, globalSettingName, valueHandlingFunction)
 end
 
 --[[
     Setting Names: groupFrequencyRangeLowTicks, groupFrequencyRangeHighTicks, groupSize, evolutionBonus, groupSpawnRadius, tunnellingTicks, warningTicks
 ]]
 Manager.OnRuntimeModSettingChanged = function(event)
-    --TODO if settings change mid game we need to add/remove scheduled group events
-    local groupContainer, settingsContainerName = global.groups, "settings"
-
     if event == nil or event.setting == "biter_hunt_group-group_frequency_range_low_minutes" then
-        Settings.HandleSettingWithArrayOfValues(
+        Manager.HandleSettingWithArrayOfValues(
             "global",
             "biter_hunt_group-group_frequency_range_low_minutes",
             "number",
             20,
-            groupContainer,
-            settingsContainerName,
             "groupFrequencyRangeLowTicks",
             function(value)
                 if value ~= nil and value > 0 then
@@ -75,13 +60,11 @@ Manager.OnRuntimeModSettingChanged = function(event)
         )
     end
     if event == nil or event.setting == "biter_hunt_group-group_frequency_range_high_minutes" then
-        Settings.HandleSettingWithArrayOfValues(
+        Manager.HandleSettingWithArrayOfValues(
             "global",
             "biter_hunt_group-group_frequency_range_high_minutes",
             "number",
             45,
-            groupContainer,
-            settingsContainerName,
             "groupFrequencyRangeHighTicks",
             function(value)
                 if value ~= nil and value > 0 then
@@ -92,16 +75,14 @@ Manager.OnRuntimeModSettingChanged = function(event)
         )
     end
     if event == nil or event.setting == "biter_hunt_group-group_size" then
-        Settings.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_size", "number", 80, groupContainer, settingsContainerName, "groupSize")
+        Manager.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_size", "number", 80, "groupSize")
     end
     if event == nil or event.setting == "biter_hunt_group-group_evolution_bonus_percent" then
-        Settings.HandleSettingWithArrayOfValues(
+        Manager.HandleSettingWithArrayOfValues(
             "global",
             "biter_hunt_group-group_evolution_bonus_percent",
             "number",
             10,
-            groupContainer,
-            settingsContainerName,
             "evolutionBonus",
             function(value)
                 if value ~= nil and value > 0 then
@@ -112,16 +93,14 @@ Manager.OnRuntimeModSettingChanged = function(event)
         )
     end
     if event == nil or event.setting == "biter_hunt_group-group_spawn_radius_from_target" then
-        Settings.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_spawn_radius_from_target", "number", 100, groupContainer, settingsContainerName, "groupSpawnRadius")
+        Manager.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_spawn_radius_from_target", "number", 100, "groupSpawnRadius")
     end
     if event == nil or event.setting == "biter_hunt_group-group_tunnelling_time_seconds" then
-        Settings.HandleSettingWithArrayOfValues(
+        Manager.HandleSettingWithArrayOfValues(
             "global",
             "biter_hunt_group-group_tunnelling_time_seconds",
             "number",
             3,
-            groupContainer,
-            settingsContainerName,
             "tunnellingTicks",
             function(value)
                 if value ~= nil and value > 0 then
@@ -132,13 +111,11 @@ Manager.OnRuntimeModSettingChanged = function(event)
         )
     end
     if event == nil or event.setting == "biter_hunt_group-group_incomming_warning_seconds" then
-        Settings.HandleSettingWithArrayOfValues(
+        Manager.HandleSettingWithArrayOfValues(
             "global",
             "biter_hunt_group-group_incomming_warning_seconds",
             "number",
             10,
-            groupContainer,
-            settingsContainerName,
             "warningTicks",
             function(value)
                 if value ~= nil and value > 0 then
@@ -149,40 +126,75 @@ Manager.OnRuntimeModSettingChanged = function(event)
         )
     end
     if event == nil or event.setting == "biter_hunt_group-group_warning_text" then
-        Settings.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_warning_text", "string", "Incomming Tunneling Biter Pack", groupContainer, settingsContainerName, "warningText")
+        Manager.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_warning_text", "string", "Incomming Tunneling Biter Pack", "warningText")
     end
     if event == nil or event.setting == "biter_hunt_group-group_hunting_text" then
-        Settings.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_hunting_text", "string", "Pack currently hunting __1__ on __2__", groupContainer, settingsContainerName, "huntingText")
+        Manager.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_hunting_text", "string", "Pack currently hunting __1__ on __2__", "huntingText")
     end
 
     if testing_singleGroup then
-        global.groups[0].settings.groupFrequencyRangeLowTicks = 60 * 10
-        global.groups[0].settings.groupFrequencyRangeHighTicks = 60 * 10
-        global.groups[0].settings.warningTicks = 120
-        global.groups[0].settings.tunnellingTicks = 120
-        global.groups[0].settings.groupSize = 2
-        global.groups[0].settings.groupSpawnRadius = 5
-        global.groups[1] = nil
-        global.groups[2] = nil
+        global.defaultSettings.groupFrequencyRangeLowTicks = 60 * 10
+        global.defaultSettings.groupFrequencyRangeHighTicks = 60 * 10
+        global.defaultSettings.warningTicks = 120
+        global.defaultSettings.tunnellingTicks = 120
+        global.defaultSettings.groupSize = 2
+        global.defaultSettings.groupSpawnRadius = 5
+        Settings.CreateGlobalGroupSettingsContainer(global.groups, 1, "settings")
+        global.groups[1].settings.testing = true
     end
     if testing_doubleGroup then
-        global.groups[0].settings.groupFrequencyRangeLowTicks = 60 * 10
-        global.groups[0].settings.groupFrequencyRangeHighTicks = 60 * 10
-        global.groups[0].settings.warningTicks = 120
-        global.groups[0].settings.tunnellingTicks = 120
-        global.groups[0].settings.groupSize = 2
-        global.groups[0].settings.groupSpawnRadius = 5
+        global.defaultSettings.groupFrequencyRangeLowTicks = 60 * 8
+        global.defaultSettings.groupFrequencyRangeHighTicks = 60 * 12
+        global.defaultSettings.warningTicks = 120
+        global.defaultSettings.tunnellingTicks = 120
+        global.defaultSettings.groupSize = 2
+        global.defaultSettings.groupSpawnRadius = 5
+        Settings.CreateGlobalGroupSettingsContainer(global.groups, 1, "settings")
+        global.groups[1].settings.testing = true
+        Settings.CreateGlobalGroupSettingsContainer(global.groups, 2, "settings")
+        global.groups[2].settings.testing = true
     end
 
-    for groupId, group in pairs(groupContainer) do
-        if Utils.GetTableLength(group[settingsContainerName]) == 0 then
-            Logging.LogPrint("TODO: removed group '" .. groupId .. "' as no settings - TIDY STUFF UP")
-            table.remove(groupContainer, groupId)
+    if event ~= nil then
+        --Setting changed mid game, so apply group changes
+        Manager.UpdateGroupsFromSettings()
+    end
+end
+
+Manager.UpdateGroupsFromSettings = function()
+    local groupsMaxCount = math.max(Utils.GetMaxKey(global.groups), 1)
+    for groupId = 1, groupsMaxCount do
+        local group = Manager.CreateAndPopulateGlobalGroupAsNeeded(groupId)
+        if Utils.GetTableNonNilLength(group.packs) == 0 then
+            Manager.ScheduleNextPackForGroup(group)
         end
     end
+    for groupId, group in pairs(global.groups) do
+        if groupId > 1 and Utils.GetTableNonNilLength(group.settings) == 0 then
+            Manager.RemoveGroup(group)
+        end
+    end
+    Interfaces.Call("Gui.UpdateAllConnectedPlayers")
+end
 
-    --Logging.LogPrint(Utils.TableContentsToJSON(global.groups, "global.groups"))
-    global.groupsCount = math.max(Utils.GetMaxKey(global.groups), 1)
+Manager.CreateAndPopulateGlobalGroupAsNeeded = function(groupId)
+    global.groups[groupId] = global.groups[groupId] or {}
+    local group = global.groups[groupId]
+    group.id = group.id or groupId
+    group.results = group.results or {}
+    group.packs = group.packs or {}
+    group.lastPackId = group.lastPackId or 0
+    group.settings = group.settings or {}
+    return group
+end
+
+Manager.RemoveGroup = function(group)
+    local groupId = group.id
+    for _, pack in pairs(group.packs) do
+        Interfaces.Call("Controller.DeletePack", group, pack)
+    end
+    global.groups[groupId] = nil
+    Interfaces.Call("Gui.UpdateAllConnectedPlayers")
 end
 
 Manager.OnPlayerJoinedGame = function(event)
@@ -223,15 +235,14 @@ Manager.MakeBitersAttackNowCommand = function(command)
             Logging.LogPrint("biters_attack_now command called with non existent low numerical ID")
             return
         end
-        if groupId > global.groupsCount then
+        if groupId > #global.groups then
             Logging.LogPrint("biters_attack_now command called with non existent high numerical ID")
             return
         end
         local group = global.groups[groupId]
         Manager.MakeBiterGroupPackAttackNow(group)
     else
-        for groupId = 1, global.groupsCount do
-            local group = global.groups[groupId]
+        for _, group in pairs(global.groups) do
             Manager.MakeBiterGroupPackAttackNow(group)
         end
     end
@@ -239,8 +250,8 @@ end
 
 Manager.WriteOutHuntGroupResults = function(commandData)
     local results = {}
-    for id = 1, global.groupsCount do
-        results[id] = global.groups[id].results
+    for groupId, group in pairs(global.groups) do
+        results[groupId] = group.results
     end
     game.write_file("Biter Hunt Group Results.txt", Utils.TableContentsToJSON(results), false, commandData.player_index)
 end

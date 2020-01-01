@@ -24,6 +24,7 @@ Controller.OnLoad = function()
     Events.RegisterHandler(defines.events.on_player_left_game, "BiterHuntGroupManager", Controller.OnPlayerLeftGame)
     Events.RegisterHandler(defines.events.on_player_driving_changed_state, "BiterHuntGroupManager", Controller.OnPlayerDrivingChangedState)
     Interfaces.RegisterInterface("Controller.GenerateUniqueId", Controller.GenerateUniqueId)
+    Interfaces.RegisterInterface("Controller.DeletePack", Controller.DeletePack)
 end
 
 Controller.CreatePack = function(group)
@@ -39,7 +40,7 @@ Controller.CreatePack = function(group)
     pack.targetEntity = nil
     pack.targetName = nil
     pack.surface = nil
-    pack.groundMovementEffects = nil
+    pack.groundMovementEffects = {}
     pack.hasBeenTargetedAtSpawn = false
     pack.finalResultReached = false
     pack.warningTicks = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "warningTicks")
@@ -52,15 +53,31 @@ Controller.CreatePack = function(group)
     return pack
 end
 
-Controller.RemoveActiveBitersPack = function(pack)
+Controller.BiterPackAllDead = function(pack)
     if pack.state ~= SharedData.biterHuntGroupState.bitersActive then
         return
     end
     local packId = pack.id
     local group = pack.group
     group.packs[packId] = nil
-    Interfaces.Call("Gui.UpdateAllConnectedPlayers")
     local uniqueId = Controller.GenerateUniqueId(group.id, packId)
+    EventScheduler.RemoveScheduledEvents("Controller.PackAction_BitersActive", uniqueId)
+end
+
+Controller.DeletePack = function(group, pack)
+    local packId = pack.id
+    for _, unit in pairs(pack.units) do
+        unit.destroy()
+    end
+    for _, groundEffect in pairs(pack.groundMovementEffects) do
+        groundEffect.destroy()
+    end
+    group.packs[packId] = nil
+    local uniqueId = Controller.GenerateUniqueId(group.id, packId)
+    EventScheduler.RemoveScheduledEvents("Controller.PackAction_Warning", uniqueId)
+    EventScheduler.RemoveScheduledEvents("Controller.PackAction_GroundMovement", uniqueId)
+    EventScheduler.RemoveScheduledEvents("Controller.PackAction_PreSpawnEffect", uniqueId)
+    EventScheduler.RemoveScheduledEvents("Controller.PackAction_SpawnBiters", uniqueId)
     EventScheduler.RemoveScheduledEvents("Controller.PackAction_BitersActive", uniqueId)
 end
 
@@ -111,9 +128,10 @@ Controller.PackAction_BitersActive = function(event)
             pack.units[i] = nil
         end
     end
-    if #pack.units == 0 then
+    if Utils.GetTableNonNilLength(pack.units) == 0 then
         Controller.RecordResult("bitersDied", pack)
-        Controller.RemoveActiveBitersPack(pack)
+        Controller.BiterPackAllDead(pack)
+        Interfaces.Call("Gui.UpdateAllConnectedPlayers")
     else
         Controller.CommandEnemies(pack)
         local nextPackActionTick = tick + 60
@@ -211,7 +229,6 @@ Controller._CreateGroundMovement = function(pack, distance, attempts)
         end
     end
 
-    pack.groundMovementEffects = {}
     for _, position in pairs(biterPositions) do
         Controller.SpawnGroundMovementEffect(pack, surface, position)
     end
@@ -284,7 +301,7 @@ end
 
 Controller.CommandEnemies = function(pack)
     local debug = false
-    if pack.hasBeenTargetedAtSpawn or #pack.units == 0 then
+    if pack.hasBeenTargetedAtSpawn or Utils.GetTableNonNilLength(pack.units) == 0 then
         return
     end
     local targetEntity = pack.targetEntity
@@ -346,12 +363,13 @@ Controller.TargetBitersAtSpawn = function(pack)
     game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter] rampaging towards spawn now!")
     pack.targetEntity = nil
     Controller.CommandEnemies(pack)
-    Controller.RemoveActiveBitersPack(pack)
+    Controller.BiterPackAllDead(pack)
 end
 
 Controller.TargetBitersAtSpawnFromError = function(pack)
     Controller.RecordResult("error", pack)
     Controller.TargetBitersAtSpawn(pack)
+    Interfaces.Call("Gui.UpdateAllConnectedPlayers")
 end
 
 Controller.RecordResult = function(outcome, pack)
@@ -386,8 +404,7 @@ end
 
 Controller.GetPacksPlayerIdIsATargetFor = function(playerId)
     local targetPacks = {}
-    for groupId = 1, global.groupsCount do
-        local group = global.groups[groupId]
+    for _, group in pairs(global.groups) do
         for _, pack in pairs(group.packs) do
             if pack.targetPlayerID == playerId then
                 table.insert(targetPacks, pack)
@@ -399,17 +416,27 @@ end
 
 Controller.OnPlayerDied = function(event)
     local playerId = event.player_index
+    local playerWasATarget = false
     for _, pack in pairs(Controller.GetPacksPlayerIdIsATargetFor(playerId)) do
         Controller.RecordResult("playerDied", pack)
         Controller.TargetBitersAtSpawn(pack)
+        playerWasATarget = true
+    end
+    if playerWasATarget then
+        Interfaces.Call("Gui.UpdateAllConnectedPlayers")
     end
 end
 
 Controller.OnPlayerLeftGame = function(event)
     local playerId = event.player_index
+    local playerWasATarget = false
     for _, pack in pairs(Controller.GetPacksPlayerIdIsATargetFor(playerId)) do
         Controller.RecordResult("playerLeft", pack)
         Controller.TargetBitersAtSpawn(pack)
+        playerWasATarget = true
+    end
+    if playerWasATarget then
+        Interfaces.Call("Gui.UpdateAllConnectedPlayers")
     end
 end
 
@@ -423,7 +450,7 @@ Controller.OnPlayerDrivingChangedState = function(event)
             pack.TargetEntity = player.character
         else
             Logging.LogPrint("PANIC - player driving state changed and no vehicle or body!")
-            Controller.TargetBitersAtSpawn(pack)
+            Controller.TargetBitersAtSpawnFromError(pack)
         end
     end
 end

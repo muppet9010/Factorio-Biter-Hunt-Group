@@ -6,24 +6,6 @@ local Interfaces = require("utility/interfaces")
 --local Utils = require("utility/utils")
 --local Logging = require("utility/logging")
 
-local function GetModFrame(player)
-    local frameElement = GUIUtil.GetOrAddElement({parent = player.gui.left, name = "main", type = "frame", direction = "vertical", style = "muppet_margin_frame"}, "biterhuntgroup")
-    frameElement.visible = false
-    return frameElement
-end
-
-local function GetHuntingFrame(mainFrame)
-    local frameElement = GUIUtil.GetOrAddElement({parent = mainFrame, name = "hunting", type = "frame", direction = "vertical", style = "muppet_margin_frame"}, "biterhuntgroup")
-    frameElement.visible = false
-    return frameElement
-end
-
-local function GetIncommingFrame(mainFrame)
-    local frameElement = GUIUtil.GetOrAddElement({parent = mainFrame, name = "incomming", type = "frame", direction = "vertical", style = "muppet_margin_frame"}, "biterhuntgroup")
-    frameElement.visible = false
-    return frameElement
-end
-
 Gui.OnLoad = function()
     Interfaces.RegisterInterface("Gui.RecreateAll", Gui.RecreateAll)
     Interfaces.RegisterInterface("Gui.RecreatePlayer", Gui.RecreatePlayer)
@@ -51,17 +33,16 @@ end
 
 Gui.UpdatePlayer = function(playerIndex)
     local player = game.get_player(playerIndex)
-    local mainFrameElement = GetModFrame(player)
-    local huntingFrameElement = GetHuntingFrame(mainFrameElement)
-    local incommingFrameElement = GetIncommingFrame(mainFrameElement)
+    local mainFrameElement = Gui.GetModFrame(player)
+    local huntingFrameElement = Gui.GetHuntingFrame(mainFrameElement)
+    local incommingFrameElement = Gui.GetIncommingFrame(mainFrameElement)
     huntingFrameElement.clear()
     incommingFrameElement.clear()
 
-    for groupId = 1, global.groupsCount do
-        local group = global.groups[groupId]
+    for _, group in pairs(global.groups) do
         for _, pack in pairs(group.packs) do
             local uniqueId = Interfaces.Call("Controller.GenerateUniqueId", group.id, pack.id)
-            if pack.targetName ~= nil then
+            if pack.targetName ~= nil and not pack.finalResultReached then
                 local huntingString = string.gsub(string.gsub(pack.huntingText, "__1__", pack.targetName), "__2__", pack.surface.name)
                 GUIUtil.AddElement({parent = huntingFrameElement, name = "target" .. uniqueId, type = "label", caption = huntingString, style = "muppet_bold_text"})
                 mainFrameElement.visible = true
@@ -81,6 +62,24 @@ Gui.UpdateAllConnectedPlayers = function()
     for _, player in pairs(game.connected_players) do
         Gui.UpdatePlayer(player.index)
     end
+end
+
+Gui.GetModFrame = function(player)
+    local frameElement = GUIUtil.GetOrAddElement({parent = player.gui.left, name = "main", type = "frame", direction = "vertical", style = "muppet_margin_frame"}, "biterhuntgroup")
+    frameElement.visible = false
+    return frameElement
+end
+
+Gui.GetHuntingFrame = function(mainFrame)
+    local frameElement = GUIUtil.GetOrAddElement({parent = mainFrame, name = "hunting", type = "frame", direction = "vertical", style = "muppet_margin_frame"}, "biterhuntgroup")
+    frameElement.visible = false
+    return frameElement
+end
+
+Gui.GetIncommingFrame = function(mainFrame)
+    local frameElement = GUIUtil.GetOrAddElement({parent = mainFrame, name = "incomming", type = "frame", direction = "vertical", style = "muppet_margin_frame"}, "biterhuntgroup")
+    frameElement.visible = false
+    return frameElement
 end
 
 return Gui
