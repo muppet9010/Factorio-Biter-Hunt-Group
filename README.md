@@ -12,6 +12,7 @@ The player/spawn will be surrounded in a circle by a configurable number of tunn
 
 The hunt will be over when either the biters are all killed (player wins) or the targeted player dies from any means (biters win). If the targeted player disconnects from the server they will be classed as losing. If the player loses then the biters will rampage towards spawn destroying everything they encounter. In all cases, the results are recorded within the mod for export later for external use (see commands). The result is also broadcast via in-game messages to all players. Note, as the next pack of a group is scheduled in the future when one targets a player it is possible to have multiple packs for a group alive at one time if they aren't dealt with.
 
+
 Mutliple Group Configurations
 ---------------
 
@@ -25,16 +26,27 @@ If a mod setting only has 1 value then it is taken as a global default value and
 The mod settings which take a list like "Players Targeted" expect an array or arrays when multiple groups have unique settings. i.e. [ ["player1", "player2"], ["player3"], [] ]. In this case group 1 would target players name "player1" and "player2", group 2 would only target "player3" and group 3 would target all players on the server.
 
 
+Biter Quantity Formula Setting
+--------------
+
+This is a special setting really intended for use with the command "biters_hunt_group_add_biters". The formula is applied when a pack is spawned in the map and takes the number of biters to be created and applies the formula to it to get the final qunatity of biters. This allows for external integrations to add biters using the command in a simple fashion and then a scaling formula can be applied to it. The formula must be valid Lua written as a "return" line to be run within the mod. The biter count will be passed in as a Lua variable "biterCount". Default is blank/empty and the standard mutliple group configuration applies.
+Example of multi group configuration: ["", "return math.floor(biterCount * 2.5)"]
+
+
 Advised Other Mods
 --------------
 
 - Use "Extra Biter Control" mod and increase the pathfinder limits by at least a multiple of 5 to ensure all biters path to target quickly.
 
+
 Commands
 ------------
 
-- Command to trigger all of the configured biter hunting groups to attack now is "biters_attack_now". If multiple groups are configured via settings then individual groups can be triggered by providing their sequential ID after the command, i.e: "biters_attack_now 1".
-- Command to write out all of the biter hunt group's results as JSON: biters_write_out_hunt_group_results
+- Command to trigger all of the configured biter hunting groups to send their next scheduled pack to attack now is "biters_hunt_group_attack_now". If multiple groups are configured via settings then individual groups can be triggered by providing their sequential ID after the command, i.e: "biters_hunt_group_attack_now 1".
+- Command to write out all of the biter hunt group's results as JSON: biters_hunt_group_write_out_results
+- Command to add biters to the next pack for a group. Requires agruments for the group ID, the number of biters to add and if to reset the random timer (true/false). "biters_hunt_group_add_biters [groupId] [biterNumber]", i.e. biters_hunt_group_add_biters 1 5
+- Command to reset a groups current scheduled pack's random timer. Requires argument for the group ID. "biters_hunt_group_reset_group_timer [groupId]", i.e. biters_hunt_group_reset_group_timer 1
+
 
 Mod Compatibility
 -------------

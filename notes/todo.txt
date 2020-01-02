@@ -17,4 +17,4 @@ JD streaming:
 6:40 mins: JD kills all biters, woop
 
 followers to biters will be a mod setting: proposed setting is: math.floor( (x + (x * (x/4) ) ) * 10 )
-takes a command to add followers to the current group's waiting pack. option to trigger attack now or start / replace a random interval.
+takes a command to add followers to the current group's waiting pack. option to reset the random timer.

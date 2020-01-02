@@ -18,11 +18,12 @@ Manager.CreateGlobals = function()
 end
 
 Manager.OnLoad = function()
-    Commands.Register("biters_attack_now", {"api-description.biter_hunt_group-biters_attack_now"}, Manager.MakeBitersAttackNowCommand, true)
+    Commands.Register("biters_hunt_group_attack_now", {"api-description.biters_hunt_group_attack_now"}, Manager.MakeBitersAttackNowCommand, true)
     Events.RegisterHandler(defines.events.on_player_joined_game, "BiterHuntGroupManager", Manager.OnPlayerJoinedGame)
-    Commands.Register("biters_write_out_hunt_group_results", {"api-description.biter_hunt_group-biters_write_out_hunt_group_results"}, Manager.WriteOutHuntGroupResults, false)
+    Commands.Register("biters_hunt_group_write_out_results", {"api-description.biters_hunt_group_write_out_results"}, Manager.WriteOutHuntGroupResults, false)
     Interfaces.RegisterInterface("Manager.GetGlobalSettingForId", Manager.GetGlobalSettingForId)
-    Interfaces.RegisterInterface("Manager.ScheduleNextPackForGroup", Manager.ScheduleNextPackForGroup)
+    Commands.Register("biters_hunt_group_add_biters", {"api-description.biters_hunt_group_add_biters"}, Manager.AddBitersToGroup, true)
+    Commands.Register("biters_hunt_group_reset_group_timer", {"api-description.biters_hunt_group_reset_group_timer"}, Manager.ResetGroupsPackTimer, true)
 end
 
 Manager.OnStartup = function()
@@ -147,6 +148,8 @@ Manager.OnRuntimeModSettingChanged = function(event)
             end
         )
     end
+    --TODO: code for "biter_hunt_group-biter_quantity_formula"
+
     if testing_singleGroup then
         global.defaultSettings.groupFrequencyRangeLowTicks = 60 * 10
         global.defaultSettings.groupFrequencyRangeHighTicks = 60 * 10
@@ -181,7 +184,7 @@ Manager.UpdateGroupsFromSettings = function()
     for groupId = 1, groupsMaxCount do
         local group = Manager.CreateAndPopulateGlobalGroupAsNeeded(groupId)
         if Utils.GetTableNonNilLength(group.packs) == 0 then
-            Manager.ScheduleNextPackForGroup(group)
+            Interfaces.Call("Controller.CreateNextPackForGroup", group)
         end
     end
     for groupId, group in pairs(global.groups) do
@@ -217,14 +220,8 @@ Manager.OnPlayerJoinedGame = function(event)
     Interfaces.Call("Gui.RecreatePlayer", player)
 end
 
-Manager.ScheduleNextPackForGroup = function(group)
-    local nextPackActionTick = game.tick + math.random(Manager.GetGlobalSettingForId(group.id, "groupFrequencyRangeLowTicks"), Manager.GetGlobalSettingForId(group.id, "groupFrequencyRangeHighTicks"))
-    local pack = Interfaces.Call("Controller.CreatePack", group)
-    local uniqueId = Interfaces.Call("Controller.GenerateUniqueId", group.id, pack.id)
-    EventScheduler.ScheduleEvent(nextPackActionTick, "Controller.PackAction_Warning", uniqueId, {pack = pack})
-end
-
 Manager.MakeBiterGroupPackAttackNow = function(group)
+    --If the current pack is in the incomming state then it is already attacking now so the command won't do anything.
     local pack = group.packs[group.lastPackId]
     --Should never happen with current mod functionality. If we create a pack for a group with no random spawn time via command we need to avoid it creating its own cycle.
     --[[if pack.state ~= SharedData.biterHuntGroupState.scheduled then
@@ -232,34 +229,29 @@ Manager.MakeBiterGroupPackAttackNow = function(group)
         pack = Interfaces.Call("Controller.CreatePack", group)
     end]]
     local uniqueId = Interfaces.Call("Controller.GenerateUniqueId", group.id, pack.id)
-    EventScheduler.RemoveScheduledEvents("Controller.PackAction_Warning", uniqueId)
-    EventScheduler.ScheduleEvent(game.tick, "Controller.PackAction_Warning", uniqueId, {pack = pack})
+    if EventScheduler.IsEventScheduled("Controller.PackAction_Warning", uniqueId) then
+        EventScheduler.RemoveScheduledEvents("Controller.PackAction_Warning", uniqueId)
+        EventScheduler.ScheduleEvent(game.tick, "Controller.PackAction_Warning", uniqueId, {pack = pack})
+    end
 end
 
-Manager.MakeBitersAttackNowCommand = function(command)
-    local args = Commands.GetArgumentsFromCommand(command.parameter)
-    if #args > 0 then
+Manager.MakeBitersAttackNowCommand = function(commandData)
+    local args = Commands.GetArgumentsFromCommand(commandData.parameter)
+    if #args == 1 then
         local groupId_string = args[1]
         local groupId = tonumber(groupId_string)
-        if groupId == nil then
-            Logging.LogPrint("biters_attack_now command called with non numerical ID")
-            return
-        end
-        groupId = Utils.RoundNumberToDecimalPlaces(groupId, 0)
-        if groupId <= 0 then
-            Logging.LogPrint("biters_attack_now command called with non existent low numerical ID")
-            return
-        end
-        if groupId > #global.groups then
-            Logging.LogPrint("biters_attack_now command called with non existent high numerical ID")
+        if not Manager.IsCommandArgumentAValidGroup(groupId, groupId_string, commandData.name) then
             return
         end
         local group = global.groups[groupId]
         Manager.MakeBiterGroupPackAttackNow(group)
-    else
+    elseif #args == 1 then
         for _, group in pairs(global.groups) do
             Manager.MakeBiterGroupPackAttackNow(group)
         end
+    else
+        Logging.LogPrint(commandData.name .. " command called with wrong number of arguments, expected 0 or 1: " .. tostring(commandData.parameter))
+        return
     end
 end
 
@@ -269,6 +261,70 @@ Manager.WriteOutHuntGroupResults = function(commandData)
         results[groupId] = group.results
     end
     game.write_file("Biter Hunt Group Results.txt", Utils.TableContentsToJSON(results), false, commandData.player_index)
+end
+
+Manager.AddBitersToGroup = function(commandData)
+    local args = Commands.GetArgumentsFromCommand(commandData.parameter)
+    if #args == 2 then
+        local groupId_string = args[1]
+        local groupId = tonumber(groupId_string)
+        if not Manager.IsCommandArgumentAValidGroup(groupId, groupId_string, commandData.name) then
+            return
+        end
+
+        local biterToAdd_string = args[2]
+        local bitersToAdd = tonumber(biterToAdd_string)
+        if bitersToAdd == nil then
+            Logging.LogPrint(commandData.name .. " command called with non numerical biters to add: " .. tostring(biterToAdd_string))
+            return
+        end
+        bitersToAdd = Utils.RoundNumberToDecimalPlaces(bitersToAdd, 0)
+
+        local group = global.groups[groupId]
+        local groupLastPack = Utils.GetMaxKey(group.packs)
+        local pack = group.packs[groupLastPack]
+        Interfaces.Call("Controller.AddBiterCountToPack", pack, bitersToAdd)
+    else
+        Logging.LogPrint(commandData.name .. " command called with wrong numebr of arguments expected 2: " .. tostring(commandData.parameter))
+        return
+    end
+end
+
+Manager.IsCommandArgumentAValidGroup = function(groupId, stringValue, commandName)
+    if groupId == nil then
+        Logging.LogPrint(commandName .. " command called with non numerical ID: " .. tostring(stringValue))
+        return false
+    end
+    groupId = Utils.RoundNumberToDecimalPlaces(groupId, 0)
+    if groupId <= 0 then
+        Logging.LogPrint(commandName .. " command called with non existent low numerical ID: " .. tostring(stringValue))
+        return false
+    end
+    if groupId > #global.groups then
+        Logging.LogPrint(commandName .. " command called with non existent high numerical ID: " .. tostring(stringValue))
+        return false
+    end
+    return true
+end
+
+Manager.ResetGroupsPackTimer = function(commandData)
+    local args = Commands.GetArgumentsFromCommand(commandData.parameter)
+    if #args == 2 then
+        local groupId_string = args[1]
+        local groupId = tonumber(groupId_string)
+        if not Manager.IsCommandArgumentAValidGroup(groupId, groupId_string, commandData.name) then
+            return
+        end
+
+        local group = global.groups[groupId]
+        local groupLastPack = Utils.GetMaxKey(group.packs)
+        local pack = group.packs[groupLastPack]
+
+        Interfaces.Call("Controller.SetPackTimer", group, pack)
+    else
+        Logging.LogPrint(commandData.name .. " command called with wrong number of arguments expected 1: " .. tostring(commandData.parameter))
+        return
+    end
 end
 
 return Manager

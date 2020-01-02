@@ -19,15 +19,17 @@ Controller.OnLoad = function()
     EventScheduler.RegisterScheduledEventType("Controller.PackAction_PreSpawnEffect", Controller.PackAction_PreSpawnEffect)
     EventScheduler.RegisterScheduledEventType("Controller.PackAction_SpawnBiters", Controller.PackAction_SpawnBiters)
     EventScheduler.RegisterScheduledEventType("Controller.PackAction_BitersActive", Controller.PackAction_BitersActive)
-    Interfaces.RegisterInterface("Controller.CreatePack", Controller.CreatePack)
+    Interfaces.RegisterInterface("Controller.CreateNextPackForGroup", Controller.CreateNextPackForGroup)
     Events.RegisterHandler(defines.events.on_player_died, "BiterHuntGroupManager", Controller.OnPlayerDied)
     Events.RegisterHandler(defines.events.on_player_left_game, "BiterHuntGroupManager", Controller.OnPlayerLeftGame)
     Events.RegisterHandler(defines.events.on_player_driving_changed_state, "BiterHuntGroupManager", Controller.OnPlayerDrivingChangedState)
     Interfaces.RegisterInterface("Controller.GenerateUniqueId", Controller.GenerateUniqueId)
     Interfaces.RegisterInterface("Controller.DeletePack", Controller.DeletePack)
+    Interfaces.RegisterInterface("Controller.AddBiterCountToPack", Controller.AddBiterCountToPack)
+    Interfaces.RegisterInterface("Controller.ResetPackTimer", Controller.ResetPackTimer)
 end
 
-Controller.CreatePack = function(group)
+Controller.CreateNextPackForGroup = function(group)
     group.lastPackId = group.lastPackId + 1
     local pack = {}
     pack.id = group.lastPackId
@@ -51,7 +53,8 @@ Controller.CreatePack = function(group)
     pack.warningText = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "warningText")
     pack.huntingText = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "huntingText")
     pack.validTargetPlayerNameList = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "playerNameList")
-    return pack
+
+    Controller.SchedulePackWarningEvent(group, pack)
 end
 
 Controller.BiterPackAllDead = function(pack)
@@ -95,7 +98,7 @@ Controller.PackAction_GroundMovement = function(event)
     local group = pack.group
     pack.state = SharedData.biterHuntGroupState.groundMovement
     if not testing_only1PackPerGroup then
-        Interfaces.Call("Manager.ScheduleNextPackForGroup", group)
+        Controller.CreateNextPackForGroup(group)
     end
     Controller.SelectTarget(pack)
     Controller.RecordResult("hunting", pack)
@@ -456,6 +459,29 @@ Controller.OnPlayerDrivingChangedState = function(event)
             Controller.TargetBitersAtSpawnFromError(pack)
         end
     end
+end
+
+Controller.AddBiterCountToPack = function(pack, count)
+    pack.packSize = pack.packSize + count
+end
+
+Controller.SchedulePackWarningEvent = function(group, pack)
+    local packActionTick = game.tick + Controller.GetPackRandomTime(group)
+    local uniqueId = Controller.GenerateUniqueId(group.id, pack.id)
+    EventScheduler.ScheduleEvent(packActionTick, "Controller.PackAction_Warning", uniqueId, {pack = pack})
+end
+
+Controller.GetPackRandomTime = function(group)
+    local rangeLowTick = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "groupFrequencyRangeLowTicks")
+    local rangeHighTicks = Interfaces.Call("Manager.GetGlobalSettingForId", group.id, "groupFrequencyRangeHighTicks")
+    return math.random(rangeLowTick, rangeHighTicks)
+end
+
+Controller.ResetPackTimer = function(group, pack)
+    local uniqueId = Controller.GenerateUniqueId(group.id, pack.id)
+    EventScheduler.RemoveScheduledEvents("Controller.PackAction_Warning", uniqueId)
+    EventScheduler.RemoveScheduledEvents("Controller.PackAction_GroundMovement", uniqueId)
+    Controller.SchedulePackWarningEvent(group, pack)
 end
 
 return Controller

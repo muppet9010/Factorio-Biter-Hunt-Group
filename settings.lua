@@ -70,6 +70,14 @@ data:extend(
             allow_blank = true,
             setting_type = "runtime-global",
             order = "1010"
+        },
+        {
+            name = "biter_hunt_group-biter_quantity_formula",
+            type = "string-setting",
+            default_value = "",
+            allow_blanks = true,
+            setting_type = "runtime-grlobal",
+            order = "2000"
         }
     }
 )
