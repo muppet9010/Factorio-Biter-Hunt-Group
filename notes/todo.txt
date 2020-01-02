@@ -1,0 +1,20 @@
+a draw option for packs after x time
+after a draw or biters getting stuck (wondering) or they wonder after reaching spawn make them turn in to biter nests or die as option
+support for other modded biter nest types and limiting the very nasty new biters they add
+option for worms to spawn rather than biters
+have tunneling effect damage nearby buildings and destroy land mines on that spot
+option to spawn in groups rather than individually. "Biters per location", positive numbers is roughly how many biters per spawn location before another is added, negative numbers is a fixed number of locations the biters are devided between.
+if spawning in groups use unit groups to command in this case and keep units in valid groups...
+
+
+
+JD streaming:
+0 min: 1st follow - timer starts (@4 mins) and 1 followers biters added
+1 min: 2nd follow - timer restarts (new 3-5min timer allowing more time for someone to click follow) and 2nd followers biter added
+2 min: 3rd follow - timer restarts (new 3-5min timer as above) and 3rd followers biter added
+5-7 mins timer runs out so: 3 follower's biters (||5x10||) attack group starts its tunnelling around JD
+6:10 mins sec: they rise up and target JD
+6:40 mins: JD kills all biters, woop
+
+followers to biters will be a mod setting: proposed setting is: math.floor( (x + (x * (x/4) ) ) * 10 )
+takes a command to add followers to the current group's waiting pack. option to trigger attack now or start / replace a random interval.
