@@ -75,8 +75,8 @@ data:extend(
             name = "biter_hunt_group-biter_quantity_formula",
             type = "string-setting",
             default_value = "",
-            allow_blanks = true,
-            setting_type = "runtime-grlobal",
+            allow_blank = true,
+            setting_type = "runtime-global",
             order = "2000"
         }
     }

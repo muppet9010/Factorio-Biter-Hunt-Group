@@ -148,7 +148,9 @@ Groups.OnRuntimeModSettingChanged = function(event)
             end
         )
     end
-    --TODO: code for "biter_hunt_group-biter_quantity_formula"
+    if event == nil or event.setting == "biter_hunt_group-biter_quantity_formula" then
+        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-biter_quantity_formula", "string", nil, "biterQuantityFormula")
+    end
 
     if testing_singleGroup then
         global.defaultSettings.groupFrequencyRangeLowTicks = 60 * 10

@@ -1,7 +1,7 @@
 local Events = require("utility/events")
 local EventScheduler = require("utility/event-scheduler")
 local Groups = require("scripts/groups")
-local Packs = require("scripts/pack")
+local Packs = require("scripts/packs")
 local Gui = require("scripts/gui")
 
 local function CreateGlobals()

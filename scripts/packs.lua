@@ -46,7 +46,10 @@ Packs.CreateNextPackForGroup = function(group)
     pack.hasBeenTargetedAtSpawn = false
     pack.finalResultReached = false
     pack.warningTicks = Interfaces.Call("Groups.GetGlobalSettingForId", group.id, "warningTicks")
-    pack.packSize = Interfaces.Call("Groups.GetGlobalSettingForId", group.id, "groupSize")
+    pack.biterQuantityFormula = Interfaces.Call("Groups.GetGlobalSettingForId", group.id, "biterQuantityFormula")
+    pack.rawPackSize = Interfaces.Call("Groups.GetGlobalSettingForId", group.id, "groupSize")
+    pack.processedPackSize = 0
+    Packs.UpdateProcessedBiterPackSize(pack)
     pack.spawnRadius = Interfaces.Call("Groups.GetGlobalSettingForId", group.id, "groupSpawnRadius")
     pack.evolutionBonus = Interfaces.Call("Groups.GetGlobalSettingForId", group.id, "evolutionBonus")
     pack.tunnellingTicks = Interfaces.Call("Groups.GetGlobalSettingForId", group.id, "tunnellingTicks")
@@ -206,7 +209,7 @@ end
 Packs._CreateGroundMovement = function(pack, distance, attempts)
     local debug = false
     local biterPositions = {}
-    local packSize = pack.packSize
+    local packSize = pack.processedPackSize
     local angleRad = math.rad(360 / packSize)
     local surface = pack.surface
     local centerPosition = Packs.GetPositionForTarget(pack)
@@ -462,7 +465,8 @@ Packs.OnPlayerDrivingChangedState = function(event)
 end
 
 Packs.AddBiterCountToPack = function(pack, count)
-    pack.packSize = pack.packSize + count
+    pack.rawPackSize = pack.rawPackSize + count
+    Packs.UpdateProcessedBiterPackSize(pack)
 end
 
 Packs.SchedulePackWarningEvent = function(group, pack)
@@ -482,6 +486,35 @@ Packs.ResetPackTimer = function(group, pack)
     EventScheduler.RemoveScheduledEvents("Packs.PackAction_Warning", uniqueId)
     EventScheduler.RemoveScheduledEvents("Packs.PackAction_GroundMovement", uniqueId)
     Packs.SchedulePackWarningEvent(group, pack)
+end
+
+Packs.UpdateProcessedBiterPackSize = function(pack)
+    local formula = pack.biterQuantityFormula
+    if formula == nil or formula == "" then
+        pack.processedPackSize = pack.rawPackSize
+        return
+    end
+    local success, processedValue =
+        pcall(
+        function()
+            return loadstring("local biterCount = " .. pack.rawPackSize .. "; return " .. formula)()
+        end
+    )
+    if not success then
+        Logging.LogPrint("ERROR: formula applied to biter count caused an error: '" .. processedValue .. "'")
+        Logging.LogPrint("raw pack size: '" .. pack.rawPackSize .. "', formula: '" .. tostring(formula) .. "'")
+        pack.processedPackSize = 0
+        return
+    end
+    local processedValue_number = tonumber(processedValue)
+    if processedValue_number ~= nil then
+        pack.processedPackSize = processedValue_number
+        return
+    else
+        Logging.LogPrint("ERROR: formula applied to biter count not a number. raw pack size: '" .. processedValue .. "', formula: '" .. tostring(formula) .. "'")
+        pack.processedPackSize = 0
+        return
+    end
 end
 
 return Packs

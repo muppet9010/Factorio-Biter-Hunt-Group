@@ -30,7 +30,7 @@ Biter Quantity Formula Setting
 --------------
 
 This is a special setting really intended for use with the command "biters_hunt_group_add_biters". The formula is applied when a pack is spawned in the map and takes the number of biters to be created and applies the formula to it to get the final qunatity of biters. This allows for external integrations to add biters using the command in a simple fashion and then a scaling formula can be applied to it. The formula must be valid Lua written as a "return" line to be run within the mod. The biter count will be passed in as a Lua variable "biterCount". Default is blank/empty and the standard mutliple group configuration applies.
-Example of multi group configuration: ["", "return math.floor(biterCount * 2.5)"]
+Example of multi group configuration: ["", "math.floor(biterCount * 2.5)"]
 
 
 Advised Other Mods
