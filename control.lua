@@ -1,21 +1,21 @@
 local Events = require("utility/events")
 local EventScheduler = require("utility/event-scheduler")
-local Manager = require("scripts/manager")
-local Controller = require("scripts/controller")
+local Groups = require("scripts/groups")
+local Packs = require("scripts/pack")
 local Gui = require("scripts/gui")
 
 local function CreateGlobals()
-    Manager.CreateGlobals()
+    Groups.CreateGlobals()
 end
 
 local function OnLoad()
-    Manager.OnLoad()
-    Controller.OnLoad()
+    Groups.OnLoad()
+    Packs.OnLoad()
     Gui.OnLoad()
 end
 
 local function OnSettingChanged(event)
-    Manager.OnRuntimeModSettingChanged(event)
+    Groups.OnRuntimeModSettingChanged(event)
 end
 
 local function OnStartup()
@@ -23,7 +23,7 @@ local function OnStartup()
     OnSettingChanged(nil)
     OnLoad()
 
-    Manager.OnStartup()
+    Groups.OnStartup()
 end
 
 script.on_init(OnStartup)
