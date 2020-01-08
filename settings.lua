@@ -59,7 +59,7 @@ data:extend(
         {
             name = "biter_hunt_group-group_hunting_text",
             type = "string-setting",
-            default_value = "Pack currently hunting __1__ on __2__",
+            default_value = "Pack hunting __1__ on __2__",
             setting_type = "runtime-global",
             order = "1009"
         },

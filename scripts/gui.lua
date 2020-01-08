@@ -44,7 +44,7 @@ Gui.UpdatePlayer = function(playerIndex)
             local uniqueId = Interfaces.Call("Packs.GenerateUniqueId", group.id, pack.id)
             if pack.targetName ~= nil and not pack.finalResultReached then
                 local huntingString = string.gsub(string.gsub(pack.huntingText, "__1__", pack.targetName), "__2__", pack.surface.name)
-                GUIUtil.AddElement({parent = huntingFrameElement, name = "target" .. uniqueId, type = "label", caption = huntingString, style = "muppet_bold_text"})
+                GUIUtil.AddElement({parent = huntingFrameElement, name = "target" .. uniqueId, type = "label", caption = huntingString, style = "muppet_large_bold_text"})
                 mainFrameElement.visible = true
                 huntingFrameElement.visible = true
             end

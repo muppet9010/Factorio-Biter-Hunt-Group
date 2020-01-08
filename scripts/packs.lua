@@ -161,11 +161,17 @@ Packs.ValidSurface = function(surface)
 end
 
 Packs.SelectTarget = function(pack)
-    local players = game.connected_players
     local validPlayers = {}
-    for _, player in pairs(players) do
-        if (#pack.validTargetPlayerNameList == 0) or (#pack.validTargetPlayerNameList > 0 and Utils.GetTableKeyWithValue(pack.validTargetPlayerNameList, player.name) ~= nil) then
+    if #pack.validTargetPlayerNameList == 0 then
+        for _, player in pairs(game.connected_players) do
             if (player.vehicle ~= nil or player.character ~= nil) and Packs.ValidSurface(player.surface) then
+                table.insert(validPlayers, player)
+            end
+        end
+    else
+        for _, playerName in pairs(pack.validTargetPlayerNameList) do
+            local player = game.get_player(playerName)
+            if player ~= nil and player.valid and player.connected and (player.vehicle ~= nil or player.character ~= nil) and Packs.ValidSurface(player.surface) then
                 table.insert(validPlayers, player)
             end
         end

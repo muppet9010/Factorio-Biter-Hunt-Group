@@ -42,7 +42,11 @@ Settings.HandleSettingWithArrayOfValues = function(settingType, settingName, exp
         end
     local values = settings[settingType][settingName].value
     local tableOfValues = game.json_to_table(values)
+    --TODO: this doesn't support use of a expectedValueType of "table" like playerNameList
+    --single group with table of names breaks. ["bob"] and ["bob", "dave"]
+    --group of single group works. [["bob"]] and [["bob", "dave"]]
     if tableOfValues ~= nil and type(tableOfValues) == "table" then
+        Logging.LogPrint(Utils.TableContentsToJSON(tableOfValues, settingName))
         for id, value in pairs(tableOfValues) do
             local thisGlobalSettingContainer = Settings.CreateGlobalGroupSettingsContainer(globalGroupsContainer, id, globalSettingContainerName)
             local typedValue = ValueToType(value, expectedValueType)
@@ -52,9 +56,11 @@ Settings.HandleSettingWithArrayOfValues = function(settingType, settingName, exp
                 thisGlobalSettingContainer[globalSettingName] = valueHandlingFunction(defaultValue)
                 Logging.LogPrint("Setting '[" .. settingType .. "][" .. settingName .. "]' for entry number '" .. id .. "' has an invalid value type. Expected a '" .. expectedValueType .. "' but got the value '" .. value .. "', so using default value of '" .. defaultValue .. "'")
             end
+            Logging.LogPrint(Utils.TableContentsToJSON(thisGlobalSettingContainer[globalSettingName], "set value"))
         end
         defaultSettingsContainer[globalSettingName] = valueHandlingFunction(defaultValue)
     else
+        Logging.LogPrint(settingName .. ": " .. tostring(values))
         local typedValue = ValueToType(values, expectedValueType)
         if typedValue ~= nil then
             defaultSettingsContainer[globalSettingName] = valueHandlingFunction(typedValue)
