@@ -5,7 +5,7 @@ local Logging = require("utility/logging")
 local Commands = require("utility/commands")
 local Events = require("utility/events")
 local EventScheduler = require("utility/event-scheduler")
-local Settings = require("utility/settings-manager")
+local SettingsManager = require("utility/settings-manager")
 local Interfaces = require("utility/interfaces")
 local Groups = {}
 
@@ -33,12 +33,12 @@ end
 
 Groups.GetGlobalSettingForId = function(groupId, settingName)
     local groupContainer, settingsContainerName, defaultSettingsContainer = global.groups, "settings", global.defaultSettings
-    return Settings.GetSettingValueForId(groupContainer, groupId, settingsContainerName, settingName, defaultSettingsContainer)
+    return SettingsManager.GetSettingValueForId(groupContainer, groupId, settingsContainerName, settingName, defaultSettingsContainer)
 end
 
 Groups.HandleSettingWithArrayOfValues = function(settingType, settingName, expectedValueType, defaultValue, globalSettingName, valueHandlingFunction)
     local globalGroupsContainer, globalSettingContainerName, defaultSettingsContainer = global.groups, "settings", global.defaultSettings
-    Settings.HandleSettingWithArrayOfValues(settingType, settingName, expectedValueType, defaultSettingsContainer, defaultValue, globalGroupsContainer, globalSettingContainerName, globalSettingName, valueHandlingFunction)
+    SettingsManager.HandleSettingWithArrayOfValues(settingType, settingName, expectedValueType, defaultSettingsContainer, defaultValue, globalGroupsContainer, globalSettingContainerName, globalSettingName, valueHandlingFunction)
 end
 
 --[[
@@ -49,11 +49,11 @@ Groups.OnRuntimeModSettingChanged = function(event)
         Groups.HandleSettingWithArrayOfValues(
             "global",
             "biter_hunt_group-group_frequency_range_low_minutes",
-            "number",
+            SettingsManager.ExpectedValueTypes.number,
             20,
             "groupFrequencyRangeLowTicks",
             function(value)
-                if value ~= nil and value > 0 then
+                if value > 0 then
                     value = value * 60 * 60
                 end
                 return value
@@ -64,11 +64,11 @@ Groups.OnRuntimeModSettingChanged = function(event)
         Groups.HandleSettingWithArrayOfValues(
             "global",
             "biter_hunt_group-group_frequency_range_high_minutes",
-            "number",
+            SettingsManager.ExpectedValueTypes.number,
             45,
             "groupFrequencyRangeHighTicks",
             function(value)
-                if value ~= nil and value > 0 then
+                if value > 0 then
                     value = value * 60 * 60
                 end
                 return value
@@ -76,17 +76,17 @@ Groups.OnRuntimeModSettingChanged = function(event)
         )
     end
     if event == nil or event.setting == "biter_hunt_group-group_size" then
-        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_size", "number", 80, "groupSize")
+        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_size", SettingsManager.ExpectedValueTypes.number, 80, "groupSize")
     end
     if event == nil or event.setting == "biter_hunt_group-group_evolution_bonus_percent" then
         Groups.HandleSettingWithArrayOfValues(
             "global",
             "biter_hunt_group-group_evolution_bonus_percent",
-            "number",
+            SettingsManager.ExpectedValueTypes.number,
             10,
             "evolutionBonus",
             function(value)
-                if value ~= nil and value > 0 then
+                if value > 0 then
                     value = value / 100
                 end
                 return value
@@ -94,17 +94,17 @@ Groups.OnRuntimeModSettingChanged = function(event)
         )
     end
     if event == nil or event.setting == "biter_hunt_group-group_spawn_radius_from_target" then
-        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_spawn_radius_from_target", "number", 100, "groupSpawnRadius")
+        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_spawn_radius_from_target", SettingsManager.ExpectedValueTypes.number, 100, "groupSpawnRadius")
     end
     if event == nil or event.setting == "biter_hunt_group-group_tunnelling_time_seconds" then
         Groups.HandleSettingWithArrayOfValues(
             "global",
             "biter_hunt_group-group_tunnelling_time_seconds",
-            "number",
+            SettingsManager.ExpectedValueTypes.number,
             3,
             "tunnellingTicks",
             function(value)
-                if value ~= nil and value > 0 then
+                if value > 0 then
                     value = value * 60
                 end
                 return value
@@ -115,11 +115,11 @@ Groups.OnRuntimeModSettingChanged = function(event)
         Groups.HandleSettingWithArrayOfValues(
             "global",
             "biter_hunt_group-group_incomming_warning_seconds",
-            "number",
+            SettingsManager.ExpectedValueTypes.number,
             10,
             "warningTicks",
             function(value)
-                if value ~= nil and value > 0 then
+                if value > 0 then
                     value = value * 60
                 end
                 return value
@@ -127,29 +127,30 @@ Groups.OnRuntimeModSettingChanged = function(event)
         )
     end
     if event == nil or event.setting == "biter_hunt_group-group_warning_text" then
-        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_warning_text", "string", "Incomming Tunneling Biter Pack", "warningText")
+        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_warning_text", SettingsManager.ExpectedValueTypes.string, "Incomming Tunneling Biter Pack", "warningText")
     end
     if event == nil or event.setting == "biter_hunt_group-group_hunting_text" then
-        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_hunting_text", "string", "Pack currently hunting __1__ on __2__", "huntingText")
+        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_hunting_text", SettingsManager.ExpectedValueTypes.string, "Pack currently hunting __1__ on __2__", "huntingText")
     end
     if event == nil or event.setting == "biter_hunt_group-group_players_name_targets" then
         Groups.HandleSettingWithArrayOfValues(
             "global",
             "biter_hunt_group-group_players_name_targets",
-            "table",
+            SettingsManager.ExpectedValueTypes.arrayOfStrings,
             {},
             "playerNameList",
-            function(value)
-                if value == nil or value == "" then
-                    return {}
-                else
-                    return value
+            function(tableOfStrings)
+                for k, v in pairs(tableOfStrings) do
+                    if v == "" then
+                        tableOfStrings[k] = nil
+                    end
                 end
+                return tableOfStrings
             end
         )
     end
     if event == nil or event.setting == "biter_hunt_group-biter_quantity_formula" then
-        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-biter_quantity_formula", "string", nil, "biterQuantityFormula")
+        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-biter_quantity_formula", SettingsManager.ExpectedValueTypes.string, nil, "biterQuantityFormula")
     end
 
     if testing_singleGroup then
@@ -159,7 +160,7 @@ Groups.OnRuntimeModSettingChanged = function(event)
         global.defaultSettings.tunnellingTicks = 120
         global.defaultSettings.groupSize = 2
         global.defaultSettings.groupSpawnRadius = 5
-        Settings.CreateGlobalGroupSettingsContainer(global.groups, 1, "settings")
+        SettingsManager.CreateGlobalGroupSettingsContainer(global.groups, 1, "settings")
         global.groups[1].settings.testing = true
     end
     if testing_doubleGroup then
@@ -169,9 +170,9 @@ Groups.OnRuntimeModSettingChanged = function(event)
         global.defaultSettings.tunnellingTicks = 120
         global.defaultSettings.groupSize = 2
         global.defaultSettings.groupSpawnRadius = 5
-        Settings.CreateGlobalGroupSettingsContainer(global.groups, 1, "settings")
+        SettingsManager.CreateGlobalGroupSettingsContainer(global.groups, 1, "settings")
         global.groups[1].settings.testing = true
-        Settings.CreateGlobalGroupSettingsContainer(global.groups, 2, "settings")
+        SettingsManager.CreateGlobalGroupSettingsContainer(global.groups, 2, "settings")
         global.groups[2].settings.testing = true
     end
 

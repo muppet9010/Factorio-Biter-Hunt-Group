@@ -13,6 +13,7 @@ add remote interfaces to the commands for future use
 
 
 add optional text on the add biter command that is shown in the GUI when the command is run.
+Check settings value loading at game start have their errors shown in game chat and not just in the log, as game not running when they fire.
 
 
 
@@ -27,3 +28,5 @@ JD streaming:
 followers to biters will be a mod setting: proposed setting is: math.floor( (x + (x * (x/4) ) ) * 10 )
 command to add followers to the current group's waiting pack.
 command to reset the random timer.
+
+Look in to twitch coin usage events in twitch and streamlabs events. Need adding to integration as new event type to match against in config.
