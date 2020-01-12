@@ -113,7 +113,10 @@ SettingsManager.HandleSettingWithArrayOfValues = function(settingType, settingNa
             defaultSettingsContainer[globalSettingName] = valueHandlingFunction(typedValue)
         else
             defaultSettingsContainer[globalSettingName] = valueHandlingFunction(defaultValue)
-            Logging.LogPrint("Setting '[" .. settingType .. "][" .. settingName .. "]' isn't a valid JSON array and has an invalid value type for a single value. Expected a single or array of '" .. expectedValueType.name .. "' but got the value '" .. tostring(value) .. "', so using default value of '" .. tostring(defaultValue) .. "'")
+            if not (expectedValueType.hasChildren and value == "") then
+                --If its an arrayOf type setting and an empty string is input don't show an error. Blank string is valid as well as an empty array JSON.
+                Logging.LogPrint("Setting '[" .. settingType .. "][" .. settingName .. "]' isn't a valid JSON array and has an invalid value type for a single value. Expected a single or array of '" .. expectedValueType.name .. "' but got the value '" .. tostring(value) .. "', so using default value of '" .. tostring(defaultValue) .. "'")
+            end
         end
     end
 end
