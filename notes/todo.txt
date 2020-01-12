@@ -16,17 +16,8 @@ add optional text on the add biter command that is shown in the GUI when the com
 Check settings value loading at game start have their errors shown in game chat and not just in the log, as game not running when they fire.
 
 
-
-JD streaming:
-0 min: 1st follow - timer starts (@4 mins) and 1 followers biters added
-1 min: 2nd follow - timer restarts (new 3-5min timer allowing more time for someone to click follow) and 2nd followers biter added
-2 min: 3rd follow - timer restarts (new 3-5min timer as above) and 3rd followers biter added
-5-7 mins timer runs out so: 3 follower's biters (||5x10||) attack group starts its tunnelling around JD
-6:10 mins sec: they rise up and target JD
-6:40 mins: JD kills all biters, woop
-
+JD Playthrough:
 followers to biters will be a mod setting: proposed setting is: math.floor( (x + (x * (x/4) ) ) * 10 )
-command to add followers to the current group's waiting pack.
-command to reset the random timer.
-
-Look in to twitch coin usage events in twitch and streamlabs events. Need adding to integration as new event type to match against in config.
+Integration to trigger:
+    command to add followers to the current group's waiting pack.
+    command to reset the random timer.
