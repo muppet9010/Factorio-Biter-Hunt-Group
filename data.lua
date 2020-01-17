@@ -2,6 +2,7 @@ require("utility/style-data")
 
 local Constants = require("constants")
 local Utils = require("utility/utils")
+local Colors = require("utility/colors")
 
 data.raw["character-corpse"]["character-corpse"].icon = Constants.AssetModName .. "/graphics/character-corpse.png"
 data.raw["character-corpse"]["character-corpse"].icon_size = 180
@@ -93,6 +94,6 @@ end
 local defaultStyle = data.raw["gui-style"]["default"]
 defaultStyle[Constants.ModName .. "_biterwarning_text"] = {
     type = "label_style",
-    font_color = {r = 1, g = 0.4, b = 0.4, a = 1},
+    font_color = Colors.lightred,
     font = "default-large-bold"
 }
