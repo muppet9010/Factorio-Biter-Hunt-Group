@@ -9,15 +9,3 @@ add formula support for biter spawn radius
 Groups targeted at specific players shouldn't target spawn if no valid targets. Look to do a random offset and delay any future packs for the group. Also check players are valid targets prior to incomming stage doing anything.
 at start of incoming stage if processedPackSize is 0 then skip this pack and schedule the next one.
 add remote interfaces to the commands for future use
-
-
-
-Check settings value loading at game start have their errors shown in game chat and not just in the log, as game not running when they fire. Only need to detect on new game: tick = 0 and no connected players may do it.
-
-
-JD Playthrough:
-followers to biters will be a mod setting: proposed setting is: math.floor( (x + (x * (x/4) ) ) * 10 )
-Integration to trigger:
-    command to add followers to the current group's waiting pack.
-    command to reset the random timer.
-    command to say-it mod to highlight that a follower has joined the pack
