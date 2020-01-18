@@ -1,17 +1,21 @@
 local Events = require("utility/events")
 local EventScheduler = require("utility/event-scheduler")
-local BiterHuntGroup = require("scripts/biter-hunt-group")
+local Groups = require("scripts/groups")
+local Packs = require("scripts/packs")
+local Gui = require("scripts/gui")
 
 local function CreateGlobals()
-    BiterHuntGroup.CreateGlobals()
+    Groups.CreateGlobals()
 end
 
 local function OnLoad()
-    BiterHuntGroup.OnLoad()
+    Groups.OnLoad()
+    Packs.OnLoad()
+    Gui.OnLoad()
 end
 
 local function OnSettingChanged(event)
-    BiterHuntGroup.OnRuntimeModSettingChanged(event)
+    Groups.OnRuntimeModSettingChanged(event)
 end
 
 local function OnStartup()
@@ -19,7 +23,7 @@ local function OnStartup()
     OnSettingChanged(nil)
     OnLoad()
 
-    BiterHuntGroup.OnStartup()
+    Groups.OnStartup()
 end
 
 script.on_init(OnStartup)
