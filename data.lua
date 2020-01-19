@@ -1,7 +1,6 @@
 require("utility/style-data")
 
 local Utils = require("utility/utils")
-local Colors = require("utility/colors")
 local Constants = require("constants")
 
 data.raw["character-corpse"]["character-corpse"].icon = Constants.AssetModName .. "/graphics/character-corpse.png"
@@ -90,10 +89,3 @@ if mods["BigWinter"] ~= nil then
     local biterRiseSmoke = data.raw["trivial-smoke"]["biter_hunt_group-biter_rise_smoke"]
     biterRiseSmoke.color = {r = 223, g = 230, b = 242, a = 1}
 end
-
-local defaultStyle = data.raw["gui-style"]["default"]
-defaultStyle["biter_hunt_group_biterwarning_text"] = {
-    type = "label_style",
-    parent = "muppet_large_bold_text",
-    font_color = Colors.lightred
-}

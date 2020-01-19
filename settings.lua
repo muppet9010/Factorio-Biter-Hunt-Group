@@ -43,7 +43,7 @@ data:extend(
             order = "1006"
         },
         {
-            name = "biter_hunt_group-group_incomming_warning_seconds",
+            name = "biter_hunt_group-group_incoming_warning_seconds",
             type = "string-setting",
             default_value = 10,
             setting_type = "runtime-global",
@@ -52,7 +52,7 @@ data:extend(
         {
             name = "biter_hunt_group-group_warning_text",
             type = "string-setting",
-            default_value = "Incomming Tunneling Biter Pack",
+            default_value = "Incoming Tunneling Biter Pack",
             setting_type = "runtime-global",
             order = "1008"
         },

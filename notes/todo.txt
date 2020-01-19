@@ -7,6 +7,6 @@ have tunneling effect damage nearby buildings and destroy land mines on that spo
 option to spawn in groups rather than individually. "Biters per location", positive numbers is roughly how many biters per spawn location before another is added, negative numbers is a fixed number of locations the biters are devided between.
 if spawning in groups use unit groups to command in this case and keep units in valid groups...
 add formula support for biter spawn radius.
-Groups targeted at specific players shouldn't target spawn if no valid targets. Look to do a random offset and delay any future packs for the group. Also check players are valid targets prior to incomming stage doing anything.
+Groups targeted at specific players shouldn't target spawn if no valid targets. Look to do a random offset and delay any future packs for the group. Also check players are valid targets prior to incoming stage doing anything.
 at start of incoming stage if processedPackSize is 0 then skip this pack and schedule the next one.
 add remote interfaces to the commands for future use.

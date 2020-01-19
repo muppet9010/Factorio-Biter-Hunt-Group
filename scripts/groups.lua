@@ -111,10 +111,10 @@ Groups.OnRuntimeModSettingChanged = function(event)
             end
         )
     end
-    if event == nil or event.setting == "biter_hunt_group-group_incomming_warning_seconds" then
+    if event == nil or event.setting == "biter_hunt_group-group_incoming_warning_seconds" then
         Groups.HandleSettingWithArrayOfValues(
             "global",
-            "biter_hunt_group-group_incomming_warning_seconds",
+            "biter_hunt_group-group_incoming_warning_seconds",
             SettingsManager.ExpectedValueTypes.number,
             10,
             "warningTicks",
@@ -127,7 +127,7 @@ Groups.OnRuntimeModSettingChanged = function(event)
         )
     end
     if event == nil or event.setting == "biter_hunt_group-group_warning_text" then
-        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_warning_text", SettingsManager.ExpectedValueTypes.string, "Incomming Tunneling Biter Pack", "warningText")
+        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_warning_text", SettingsManager.ExpectedValueTypes.string, "Incoming Tunneling Biter Pack", "warningText")
     end
     if event == nil or event.setting == "biter_hunt_group-group_hunting_text" then
         Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_hunting_text", SettingsManager.ExpectedValueTypes.string, "Pack currently hunting __1__ on __2__", "huntingText")
@@ -224,7 +224,7 @@ Groups.OnPlayerJoinedGame = function(event)
 end
 
 Groups.MakeBiterGroupPackAttackNow = function(group)
-    --If the current pack is in the incomming state then it is already attacking now so the command won't do anything.
+    --If the current pack is in the incoming state then it is already attacking now so the command won't do anything.
     local pack = group.packs[group.lastPackId]
     --Should never happen with current mod functionality. If we create a pack for a group with no random spawn time via command we need to avoid it creating its own cycle.
     --[[if pack.state ~= SharedData.biterHuntGroupState.scheduled then

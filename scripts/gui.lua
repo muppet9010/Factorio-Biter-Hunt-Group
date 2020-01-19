@@ -2,6 +2,7 @@ local Gui = {}
 local GUIUtil = require("utility/gui-util")
 local SharedData = require("scripts/shared-data")
 local Interfaces = require("utility/interfaces")
+local Colors = require("utility/colors")
 --local Utils = require("utility/utils")
 --local Logging = require("utility/logging")
 
@@ -34,17 +35,16 @@ Gui.UpdatePlayer = function(playerIndex)
     local player = game.get_player(playerIndex)
     local mainFrameElement = Gui.GetModFrame(player)
     local huntingFlowElement = Gui.GetHuntingFlow(mainFrameElement)
-    local flowSpacer = Gui.GetFlowSpacer(mainFrameElement)
-    local incommingFlowElement = Gui.GetIncommingFlow(mainFrameElement)
+    local incomingFlowElement = Gui.GetIncomingFlow(mainFrameElement)
     huntingFlowElement.clear()
-    incommingFlowElement.clear()
+    incomingFlowElement.clear()
 
     for _, group in pairs(global.groups) do
         for _, pack in pairs(group.packs) do
             local uniqueId = Interfaces.Call("Packs.GenerateUniqueId", group.id, pack.id)
             if pack.targetName ~= nil and not pack.finalResultReached then
                 local packElementName = "target" .. uniqueId
-                local packFrame = GUIUtil.AddElement({parent = huntingFlowElement, name = packElementName, type = "frame", style = "muppet_frame"})
+                local packFrame = GUIUtil.AddElement({parent = huntingFlowElement, name = packElementName, type = "frame", style = "muppet_margin_frame_content"})
                 local huntingString = string.gsub(string.gsub(pack.huntingText, "__1__", pack.targetName), "__2__", pack.surface.name)
                 GUIUtil.AddElement({parent = packFrame, name = packElementName, type = "label", caption = huntingString, style = "muppet_large_bold_text"})
                 mainFrameElement.visible = true
@@ -52,16 +52,14 @@ Gui.UpdatePlayer = function(playerIndex)
             end
             if pack.state == SharedData.biterHuntGroupState.warning then
                 local packElementName = "warning" .. uniqueId
-                local packFrame = GUIUtil.AddElement({parent = incommingFlowElement, name = packElementName, type = "frame", style = "muppet_frame"})
+                local packFrame = GUIUtil.AddElement({parent = incomingFlowElement, name = packElementName, type = "frame", style = "muppet_margin_frame_content"})
                 local warningString = pack.warningText
-                GUIUtil.AddElement({parent = packFrame, name = packElementName, type = "label", caption = warningString, style = "biter_hunt_group_biterwarning_text"})
+                local label = GUIUtil.AddElement({parent = packFrame, name = packElementName, type = "label", caption = warningString, style = "muppet_large_bold_text"})
+                label.style.font_color = Colors.lightred
                 mainFrameElement.visible = true
-                incommingFlowElement.visible = true
+                incomingFlowElement.visible = true
             end
         end
-    end
-    if huntingFlowElement.visible and incommingFlowElement.visible then
-        flowSpacer.visible = true
     end
 end
 
@@ -72,8 +70,10 @@ Gui.UpdateAllConnectedPlayers = function()
 end
 
 Gui.GetModFrame = function(player)
-    local frameElement = GUIUtil.GetOrAddElement({parent = player.gui.left, name = "main", type = "frame", direction = "vertical", style = "muppet_margin_padded_light_frame"}, "biterhuntgroup")
+    local frameElement = GUIUtil.GetOrAddElement({parent = player.gui.left, name = "main", type = "frame", direction = "vertical", style = "muppet_margin_frame_main"}, "biterhuntgroup")
     frameElement.visible = false
+    frameElement.style.right_padding = 4
+    frameElement.style.bottom_padding = 4
     return frameElement
 end
 
@@ -83,14 +83,8 @@ Gui.GetHuntingFlow = function(mainFrame)
     return flowElement
 end
 
-Gui.GetFlowSpacer = function(mainFrame)
-    local flowElement = GUIUtil.GetOrAddElement({parent = mainFrame, name = "spacer", type = "flow", direction = "vertical", style = "muppet_vertical_flow"}, "biterhuntgroup")
-    flowElement.visible = false
-    return flowElement
-end
-
-Gui.GetIncommingFlow = function(mainFrame)
-    local flowElement = GUIUtil.GetOrAddElement({parent = mainFrame, name = "incomming", type = "flow", direction = "vertical", style = "muppet_vertical_flow_spaced"}, "biterhuntgroup")
+Gui.GetIncomingFlow = function(mainFrame)
+    local flowElement = GUIUtil.GetOrAddElement({parent = mainFrame, name = "incoming", type = "flow", direction = "vertical", style = "muppet_vertical_flow_spaced"}, "biterhuntgroup")
     flowElement.visible = false
     return flowElement
 end
