@@ -1,7 +1,11 @@
 # Factorio-Biter-Hunt-Group
 
-At a random configurable time, a pack of biters will become enraged against a random specific player. They will erupt from the ground around the player and hunt them relentlessly. Multiple concurrent group configurations for packs are supported.
+At a random configurable time, a pack of biters will become enraged against a random specific player. They will erupt from the ground around the player and hunt them relentlessly. Multiple concurrent group configurations of biter packs are supported.
 
+1 group of visitors:
+![1 Group](https://thumbs.gfycat.com/NeglectedEntireBarebirdbat-size_restricted.gif)
+Many friends come to tea!
+![Many Groups](https://thumbs.gfycat.com/IdealisticUnluckyLeafhopper-size_restricted.gif)
 
 Detailed Explanation
 -----------
@@ -25,6 +29,8 @@ If a mod setting only has 1 value then it is taken as a global default value and
 
 The mod settings which take a list like "Players Targeted" expect an array or arrays when multiple groups have unique settings. i.e. [ ["player1", "player2"], ["player3"], [] ]. In this case group 1 would target players name "player1" and "player2", group 2 would only target "player3" and group 3 would target all players on the server.
 
+Note: at present should a mod setting be invalid the warning message is written to the logs and printed ingame. However, the ingame message isn't visible to players when starting a new game due to how Factorio works. I am looking for a solution/workaround for this limitation.
+
 
 Biter Quantity Formula Setting
 --------------
@@ -42,10 +48,10 @@ Advised Other Mods
 Commands
 ------------
 
-- Command to trigger all of the configured biter hunting groups to send their next scheduled pack to attack now is "biters_hunt_group_attack_now". If multiple groups are configured via settings then individual groups can be triggered by providing their sequential ID after the command, i.e: "biters_hunt_group_attack_now 1".
-- Command to write out all of the biter hunt group's results as JSON: biters_hunt_group_write_out_results
-- Command to add biters to the next pack for a group. Requires agruments for the group ID, the number of biters to add and if to reset the random timer (true/false). "biters_hunt_group_add_biters [groupId] [biterNumber]", i.e. biters_hunt_group_add_biters 1 5
-- Command to reset a groups current scheduled pack's random timer. Requires argument for the group ID. "biters_hunt_group_reset_group_timer [groupId]", i.e. biters_hunt_group_reset_group_timer 1
+- Command to trigger all of the configured biter hunting groups to send their next scheduled pack to attack now is "biter_hunt_group_attack_now". If multiple groups are configured via settings then individual groups can be triggered by providing their sequential ID after the command, i.e: "biter_hunt_group_attack_now 1".
+- Command to write out all of the biter hunt group's results as JSON: biter_hunt_group_write_out_results
+- Command to add biters to the next pack for a group. Requires agruments for the group ID, the number of biters to add and if to reset the random timer (true/false). "biter_hunt_group_add_biters [groupId] [biterNumber]", i.e. biter_hunt_group_add_biters 1 5
+- Command to reset a groups current scheduled pack's random timer. Requires argument for the group ID. "biter_hunt_group_reset_group_timer [groupId]", i.e. biter_hunt_group_reset_group_timer 1
 
 
 Mod Compatibility

@@ -5,7 +5,6 @@ local Packs = {}
 local Utils = require("utility/utils")
 local Logging = require("utility/logging")
 local EventScheduler = require("utility/event-scheduler")
-local Constants = require("constants")
 local SharedData = require("scripts/shared-data")
 local Interfaces = require("utility/interfaces")
 local Events = require("utility/events")
@@ -223,7 +222,7 @@ Packs._CreateGroundMovement = function(pack, distance, attempts)
     for i = 1, packSize do
         local x = centerPosition.x + (distance * math.cos(angleRad * i))
         local y = centerPosition.y + (distance * math.sin(angleRad * i))
-        local foundPosition = surface.find_non_colliding_position(Constants.ModName .. "-biter_ground_movement", {x, y}, 2, 1, true)
+        local foundPosition = surface.find_non_colliding_position("biter_hunt_group-biter_ground_movement", {x, y}, 2, 1, true)
         if foundPosition ~= nil then
             table.insert(biterPositions, foundPosition)
         end
@@ -253,7 +252,7 @@ Packs._CreateGroundMovement = function(pack, distance, attempts)
     Logging.Log("maxAttempts: " .. maxAttempts, debug)
     while #biterPositions < packSize do
         local positionToTry = biterPositions[math.random(1, #biterPositions)]
-        local foundPosition = surface.find_non_colliding_position(Constants.ModName .. "-biter_ground_movement", positionToTry, 2, 1, true)
+        local foundPosition = surface.find_non_colliding_position("biter_hunt_group-biter_ground_movement", positionToTry, 2, 1, true)
         if foundPosition ~= nil then
             table.insert(biterPositions, foundPosition)
             Packs.SpawnGroundMovementEffect(pack, surface, foundPosition)
@@ -268,7 +267,7 @@ Packs._CreateGroundMovement = function(pack, distance, attempts)
 end
 
 Packs.SpawnGroundMovementEffect = function(pack, surface, position)
-    local effect = surface.create_entity {name = Constants.ModName .. "-biter_ground_movement", position = position}
+    local effect = surface.create_entity {name = "biter_hunt_group-biter_ground_movement", position = position}
     if effect == nil then
         Logging.LogPrint("failed to make effect at: " .. Logging.PositionToString(position))
     else
@@ -284,7 +283,7 @@ Packs.SpawnEnemyPreEffects = function(pack)
             Logging.LogPrint("ground effect has been removed by something, no SpawnEnemiePreEffects can be made")
         else
             local position = groundEffect.position
-            surface.create_entity {name = Constants.ModName .. "-biter_ground_rise_effect", position = position}
+            surface.create_entity {name = "biter_hunt_group-biter_ground_rise_effect", position = position}
         end
     end
 end
