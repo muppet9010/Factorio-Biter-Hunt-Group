@@ -89,6 +89,10 @@ end
 
 Packs.PackAction_Warning = function(event)
     local tick, uniqueId, pack = event.tick, event.instanceId, event.data.pack
+    if pack.rawPackSize == 0 then
+        Packs.ResetPackTimer(pack.group, pack)
+        return
+    end
     pack.state = SharedData.biterHuntGroupState.warning
     Interfaces.Call("Gui.UpdateAllConnectedPlayers")
     local nextPackActionTick = tick + pack.warningTicks
@@ -97,10 +101,9 @@ end
 
 Packs.PackAction_GroundMovement = function(event)
     local tick, uniqueId, pack = event.tick, event.instanceId, event.data.pack
-    local group = pack.group
     pack.state = SharedData.biterHuntGroupState.groundMovement
     if not testing_only1PackPerGroup then
-        Packs.CreateNextPackForGroup(group)
+        Packs.CreateNextPackForGroup(pack.group)
     end
     Packs.SelectTarget(pack)
     Packs.RecordResult("hunting", pack)
