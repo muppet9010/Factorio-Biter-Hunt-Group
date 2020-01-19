@@ -1,8 +1,8 @@
 require("utility/style-data")
 
-local Constants = require("constants")
 local Utils = require("utility/utils")
 local Colors = require("utility/colors")
+local Constants = require("constants")
 
 data.raw["character-corpse"]["character-corpse"].icon = Constants.AssetModName .. "/graphics/character-corpse.png"
 data.raw["character-corpse"]["character-corpse"].icon_size = 180
@@ -11,7 +11,7 @@ data:extend(
     {
         {
             type = "explosion",
-            name = Constants.ModName .. "-biter_ground_rise_effect",
+            name = "biter_hunt_group-biter_ground_rise_effect",
             animations = {
                 filename = "__core__/graphics/empty.png",
                 width = 1,
@@ -40,7 +40,7 @@ data:extend(
         },
         {
             type = "trivial-smoke",
-            name = Constants.ModName .. "-biter_rise_smoke",
+            name = "biter_hunt_group-biter_rise_smoke",
             flags = {"not-on-map"},
             show_when_smoke_off = true,
             animation = {
@@ -58,7 +58,7 @@ data:extend(
         },
         {
             type = "simple-entity",
-            name = Constants.ModName .. "-biter_ground_movement",
+            name = "biter_hunt_group-biter_ground_movement",
             collision_box = {{-0.5, -0.5}, {0.5, 0.5}},
             collision_maxk = {"object-layer", "player-layer", "water-tile"},
             selectable_in_game = false,
@@ -70,7 +70,7 @@ data:extend(
                     target_effects = {
                         {
                             type = "create-trivial-smoke",
-                            smoke_name = Constants.ModName .. "-biter_rise_smoke",
+                            smoke_name = "biter_hunt_group-biter_rise_smoke",
                             repeat_count = 3,
                             offset_deviation = {{-0.5, -0.5}, {0.5, 0.5}},
                             starting_frame_deviation = 10
@@ -83,17 +83,17 @@ data:extend(
 )
 
 if mods["BigWinter"] ~= nil then
-    local biterGroundMovement = data.raw["simple-entity"][Constants.ModName .. "-biter_ground_movement"]
+    local biterGroundMovement = data.raw["simple-entity"]["biter_hunt_group-biter_ground_movement"]
     for _, picture in pairs(biterGroundMovement.pictures) do
         picture.filename = string.gsub(picture.filename, "__base__", "__BigWinter__")
     end
-    local biterRiseSmoke = data.raw["trivial-smoke"][Constants.ModName .. "-biter_rise_smoke"]
+    local biterRiseSmoke = data.raw["trivial-smoke"]["biter_hunt_group-biter_rise_smoke"]
     biterRiseSmoke.color = {r = 223, g = 230, b = 242, a = 1}
 end
 
 local defaultStyle = data.raw["gui-style"]["default"]
-defaultStyle[Constants.ModName .. "_biterwarning_text"] = {
+defaultStyle["biter_hunt_group_biterwarning_text"] = {
     type = "label_style",
-    font_color = Colors.lightred,
-    font = "default-large-bold"
+    parent = "muppet_large_bold_text",
+    font_color = Colors.lightred
 }

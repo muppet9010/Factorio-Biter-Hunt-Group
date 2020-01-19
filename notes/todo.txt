@@ -1,11 +1,12 @@
-a draw option for packs after x time
-after a draw or biters getting stuck (wondering) or they wonder after reaching spawn make them turn in to biter nests or die as option
-support for other modded biter nest types and limiting the very nasty new biters they add
-option for worms to spawn rather than biters
-have tunneling effect damage nearby buildings and destroy land mines on that spot
+when a biter pack is targeted at spawn after killing their player don't discard the group, update GUI and track them still. As odd to see no biter packs on GUI, but a horde at spawn.
+a draw option for packs after x time.
+after a draw or biters getting stuck (wondering) or they wonder after reaching spawn make them turn in to biter nests or die as option.
+support for other modded biter nest types and limiting the very nasty new biters they add.
+option for worms to spawn rather than biters.
+have tunneling effect damage nearby buildings and destroy land mines on that spot.
 option to spawn in groups rather than individually. "Biters per location", positive numbers is roughly how many biters per spawn location before another is added, negative numbers is a fixed number of locations the biters are devided between.
 if spawning in groups use unit groups to command in this case and keep units in valid groups...
-add formula support for biter spawn radius
+add formula support for biter spawn radius.
 Groups targeted at specific players shouldn't target spawn if no valid targets. Look to do a random offset and delay any future packs for the group. Also check players are valid targets prior to incomming stage doing anything.
 at start of incoming stage if processedPackSize is 0 then skip this pack and schedule the next one.
-add remote interfaces to the commands for future use
+add remote interfaces to the commands for future use.

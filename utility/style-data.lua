@@ -1,28 +1,109 @@
 local defaultStyle = data.raw["gui-style"]["default"]
 local guiHeadingColor = {255, 230, 192}
+local lightFrameGraphicalSet = {
+    base = {
+        position = {68, 0},
+        corner_size = 8
+    }
+}
 
+defaultStyle.muppet_horizontal_flow = {
+    type = "horizontal_flow_style",
+    margin = 0,
+    padding = 0,
+    horizontal_spacing = 0
+}
+defaultStyle.muppet_vertical_flow = {
+    type = "vertical_flow_style",
+    margin = 0,
+    padding = 0,
+    vertical_spacing = 0
+}
 defaultStyle.muppet_padded_horizontal_flow = {
     type = "horizontal_flow_style",
-    left_padding = 4,
-    top_padding = 4
+    margin = 0,
+    padding = 4,
+    horizontal_spacing = 0
 }
 defaultStyle.muppet_padded_vertical_flow = {
     type = "vertical_flow_style",
-    left_padding = 4,
-    top_padding = 4
+    margin = 0,
+    padding = 4,
+    vertical_spacing = 0
 }
 
-defaultStyle.muppet_padded_frame = {
+defaultStyle.muppet_horizontal_flow_spaced = {
+    type = "horizontal_flow_style",
+    margin = 0,
+    padding = 0,
+    horizontal_spacing = 8 --4 + 2*2 for shadows
+}
+defaultStyle.muppet_vertical_flow_spaced = {
+    type = "vertical_flow_style",
+    margin = 0,
+    padding = 0,
+    vertical_spacing = 8 --4 + 2*2 for shadows
+}
+defaultStyle.muppet_padded_horizontal_flow_spaced = {
+    type = "horizontal_flow_style",
+    margin = 0,
+    padding = 4,
+    horizontal_spacing = 8 --4 + 2*2 for shadows
+}
+defaultStyle.muppet_padded_vertical_flow_spaced = {
+    type = "vertical_flow_style",
+    margin = 0,
+    padding = 4,
+    vertical_spacing = 8 --4 + 2*2 for shadows
+}
+
+defaultStyle.muppet_frame = {
     type = "frame_style",
-    left_padding = 4,
-    top_padding = 4
+    margin = 0,
+    padding = 0
 }
 defaultStyle.muppet_margin_frame = {
     type = "frame_style",
-    left_margin = 4,
-    top_margin = 4
+    margin = 4,
+    padding = 0
+}
+defaultStyle.muppet_padded_frame = {
+    type = "frame_style",
+    margin = 0,
+    padding = 4
+}
+defaultStyle.muppet_margin_padded_frame = {
+    type = "frame_style",
+    margin = 4,
+    padding = 0
 }
 
+defaultStyle.muppet_light_frame = {
+    type = "frame_style",
+    graphical_set = lightFrameGraphicalSet,
+    margin = 0,
+    padding = 0
+}
+defaultStyle.muppet_margin_light_frame = {
+    type = "frame_style",
+    graphical_set = lightFrameGraphicalSet,
+    margin = 4,
+    padding = 0
+}
+defaultStyle.muppet_padded_light_frame = {
+    type = "frame_style",
+    graphical_set = lightFrameGraphicalSet,
+    margin = 0,
+    padding = 4
+}
+defaultStyle.muppet_margin_padded_light_frame = {
+    type = "frame_style",
+    graphical_set = lightFrameGraphicalSet,
+    margin = 4,
+    padding = 4
+}
+
+--TODO: Tables need updating to match new explicit approach used above
 defaultStyle.muppet_padded_table = {
     type = "table_style",
     top_padding = 5,
