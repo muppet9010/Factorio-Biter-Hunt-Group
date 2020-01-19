@@ -42,10 +42,10 @@ Advised Other Mods
 Commands
 ------------
 
-- Command to trigger all of the configured biter hunting groups to send their next scheduled pack to attack now is "biters_hunt_group_attack_now". If multiple groups are configured via settings then individual groups can be triggered by providing their sequential ID after the command, i.e: "biters_hunt_group_attack_now 1".
-- Command to write out all of the biter hunt group's results as JSON: biters_hunt_group_write_out_results
-- Command to add biters to the next pack for a group. Requires agruments for the group ID, the number of biters to add and if to reset the random timer (true/false). "biters_hunt_group_add_biters [groupId] [biterNumber]", i.e. biters_hunt_group_add_biters 1 5
-- Command to reset a groups current scheduled pack's random timer. Requires argument for the group ID. "biters_hunt_group_reset_group_timer [groupId]", i.e. biters_hunt_group_reset_group_timer 1
+- Command to trigger all of the configured biter hunting groups to send their next scheduled pack to attack now is "biter_hunt_group_attack_now". If multiple groups are configured via settings then individual groups can be triggered by providing their sequential ID after the command, i.e: "biter_hunt_group_attack_now 1".
+- Command to write out all of the biter hunt group's results as JSON: biter_hunt_group_write_out_results
+- Command to add biters to the next pack for a group. Requires agruments for the group ID, the number of biters to add and if to reset the random timer (true/false). "biter_hunt_group_add_biters [groupId] [biterNumber]", i.e. biter_hunt_group_add_biters 1 5
+- Command to reset a groups current scheduled pack's random timer. Requires argument for the group ID. "biter_hunt_group_reset_group_timer [groupId]", i.e. biter_hunt_group_reset_group_timer 1
 
 
 Mod Compatibility

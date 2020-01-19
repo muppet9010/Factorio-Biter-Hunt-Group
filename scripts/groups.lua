@@ -18,12 +18,12 @@ Groups.CreateGlobals = function()
 end
 
 Groups.OnLoad = function()
-    Commands.Register("biters_hunt_group_attack_now", {"api-description.biters_hunt_group_attack_now"}, Groups.MakeBitersAttackNowCommand, true)
+    Commands.Register("biter_hunt_group_attack_now", {"api-description.biter_hunt_group_attack_now"}, Groups.MakeBitersAttackNowCommand, true)
     Events.RegisterHandler(defines.events.on_player_joined_game, "BiterHuntGroups", Groups.OnPlayerJoinedGame)
-    Commands.Register("biters_hunt_group_write_out_results", {"api-description.biters_hunt_group_write_out_results"}, Groups.WriteOutHuntGroupResults, false)
+    Commands.Register("biter_hunt_group_write_out_results", {"api-description.biter_hunt_group_write_out_results"}, Groups.WriteOutHuntGroupResults, false)
     Interfaces.RegisterInterface("Groups.GetGlobalSettingForId", Groups.GetGlobalSettingForId)
-    Commands.Register("biters_hunt_group_add_biters", {"api-description.biters_hunt_group_add_biters"}, Groups.AddBitersToGroup, true)
-    Commands.Register("biters_hunt_group_reset_group_timer", {"api-description.biters_hunt_group_reset_group_timer"}, Groups.ResetGroupsPackTimer, true)
+    Commands.Register("biter_hunt_group_add_biters", {"api-description.biter_hunt_group_add_biters"}, Groups.AddBitersToGroup, true)
+    Commands.Register("biter_hunt_group_reset_group_timer", {"api-description.biter_hunt_group_reset_group_timer"}, Groups.ResetGroupsPackTimer, true)
 end
 
 Groups.OnStartup = function()
@@ -248,7 +248,7 @@ Groups.MakeBitersAttackNowCommand = function(commandData)
         end
         local group = global.groups[groupId]
         Groups.MakeBiterGroupPackAttackNow(group)
-    elseif #args == 1 then
+    elseif #args == 0 then
         for _, group in pairs(global.groups) do
             Groups.MakeBiterGroupPackAttackNow(group)
         end
