@@ -1,7 +1,11 @@
 # Factorio-Biter-Hunt-Group
 
-At a random configurable time, a pack of biters will become enraged against a random specific player. They will erupt from the ground around the player and hunt them relentlessly. Multiple concurrent group configurations for packs are supported.
+At a random configurable time, a pack of biters will become enraged against a random specific player. They will erupt from the ground around the player and hunt them relentlessly. Multiple concurrent group configurations of biter packs are supported.
 
+1 group of visitors:
+![1 Group](https://thumbs.gfycat.com/NeglectedEntireBarebirdbat-size_restricted.gif)
+Many friends come to tea!
+![Many Groups](https://thumbs.gfycat.com/IdealisticUnluckyLeafhopper-size_restricted.gif)
 
 Detailed Explanation
 -----------
@@ -24,6 +28,8 @@ Example, a mod setting with the value of [2,10,3] would create 3 groups each hav
 If a mod setting only has 1 value then it is taken as a global default value and applied to all groups. In the case of a mismatch of group quantity between multiple mod settings the mod's default settings are used when needed to avoid errors, i.e. one mod setting has 2 array entries ([1,2]) and another mod setting has 3 array entries ([1,2,3]). A group's ID is just its order in a mod setting array and may be needed for some commands.
 
 The mod settings which take a list like "Players Targeted" expect an array or arrays when multiple groups have unique settings. i.e. [ ["player1", "player2"], ["player3"], [] ]. In this case group 1 would target players name "player1" and "player2", group 2 would only target "player3" and group 3 would target all players on the server.
+
+Note: at present should a mod setting be invalid the warning message is written to the logs and printed ingame. However, the ingame message isn't visible to players when starting a new game due to how Factorio works. I am looking for a solution/workaround for this limitation.
 
 
 Biter Quantity Formula Setting
