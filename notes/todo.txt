@@ -8,5 +8,4 @@ option to spawn in groups rather than individually. "Biters per location", posit
 if spawning in groups use unit groups to command in this case and keep units in valid groups...
 add formula support for biter spawn radius.
 Groups targeted at specific players shouldn't target spawn if no valid targets. Look to do a random offset and delay any future packs for the group. Also check players are valid targets prior to incoming stage doing anything.
-at start of incoming stage if processedPackSize is 0 then skip this pack and schedule the next one.
 add remote interfaces to the commands for future use.
