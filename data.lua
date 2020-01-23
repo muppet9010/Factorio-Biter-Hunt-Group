@@ -25,7 +25,7 @@ data:extend(
                         {
                             type = "create-particle",
                             repeat_count = 100,
-                            entity_name = "stone-particle",
+                            particle_name = "stone-particle",
                             initial_height = 0.5,
                             speed_from_center = 0.03,
                             speed_from_center_deviation = 0.05,

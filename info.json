@@ -1,13 +1,13 @@
 {
     "name": "biter_hunt_group",
-    "version": "17.0.1",
+    "version": "18.0.2",
     "title": "Biter Hunt Group",
     "author": "Muppet9010",
     "contact": "",
-    "homepage": "https://mods.factorio.com/mod/biter-hunt-group",
-    "factorio_version": "0.17",
+    "homepage": "https://mods.factorio.com/mod/biter_hunt_group",
+    "factorio_version": "0.18",
     "dependencies": [
-        "base >= 0.17.79",
+        "base >= 0.18",
         "?BigWinter",
         "?space-exploration"
     ],
