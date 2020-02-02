@@ -1,6 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 18.0.3
+Date: 2020-02-23
+  Features:
+  Changes:
+  Bugfixes:
+    - fix character-corpse entity icon error from change in Factorio 0.18.3
+  Info:
+---------------------------------------------------------------------------------------------------
 Version: 18.0.2
-Date: 2019-01-23
+Date: 2020-01-23
   Features:
     - Updated to Factorio 0.18 as-is
   Changes:
@@ -8,7 +16,7 @@ Date: 2019-01-23
   Info:
 ---------------------------------------------------------------------------------------------------
 Version: 17.0.1
-Date: 2019-01-19
+Date: 2020-01-19
   Features:
     - Initial Public Release
   Changes:

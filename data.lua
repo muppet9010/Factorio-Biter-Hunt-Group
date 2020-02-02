@@ -3,8 +3,10 @@ require("utility/style-data")
 local Utils = require("utility/utils")
 local Constants = require("constants")
 
-data.raw["character-corpse"]["character-corpse"].icon = Constants.AssetModName .. "/graphics/character-corpse.png"
-data.raw["character-corpse"]["character-corpse"].icon_size = 180
+local characterCorpse = data.raw["character-corpse"]["character-corpse"]
+characterCorpse.icon = Constants.AssetModName .. "/graphics/character-corpse.png"
+characterCorpse.icon_size = 180
+characterCorpse.icon_mipmaps = 0
 
 data:extend(
     {
