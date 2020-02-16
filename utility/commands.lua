@@ -1,7 +1,8 @@
 local Commands = {}
 local Utils = require("utility/utils")
 
-function Commands.Register(name, helpText, commandFunction, adminOnly)
+--Call from OnLoad
+Commands.Register = function(name, helpText, commandFunction, adminOnly)
     commands.remove_command(name)
     local handlerFunction
     if not adminOnly then
@@ -24,7 +25,8 @@ function Commands.Register(name, helpText, commandFunction, adminOnly)
 end
 
 --Supports string arguments with spaces within single or double quotes. No escaping of quotes within a command needed. Tables as json can NOT have spaces in them
-function Commands.GetArgumentsFromCommand(parameterString)
+--TODO: redo to make this handle spaces in JSON by tracking JSON data structure open and closes.
+Commands.GetArgumentsFromCommand = function(parameterString)
     local args = {}
     local longArg = ""
     if parameterString ~= nil then
@@ -47,7 +49,7 @@ function Commands.GetArgumentsFromCommand(parameterString)
     return args
 end
 
-function Commands._CheckValueType(text)
+Commands._CheckValueType = function(text)
     if text == "nil" then
         return nil
     end
@@ -66,7 +68,7 @@ function Commands._CheckValueType(text)
     return Commands._StripLeadingTrailingQuotes(text)
 end
 
-function Commands._StripLeadingTrailingQuotes(text)
+Commands._StripLeadingTrailingQuotes = function(text)
     if string.sub(text, 1, 1) == "'" and string.sub(text, -1) == "'" then
         return string.sub(text, 2, -2)
     elseif string.sub(text, 1, 1) == '"' and string.sub(text, -1) == '"' then
