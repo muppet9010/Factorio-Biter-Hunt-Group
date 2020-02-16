@@ -1,9 +1,10 @@
 Next:
-    - track player names against raw biter count and apply their names to a tinted gold biter for each player. up health x2 of tinted biters and reduce damage by 1/2 damage.
+    - make targeted players accept a single name out of json format
     - add option to show number of biters left on the hunting gui. should be a __3__ and update on each biter death.
 
 
 Future:
+    - track supporter names against raw biter count and apply their names to a special tinted gold biter for each supporter. Select a highest evo biter type (not spitter) and up its health by x2  and reduce damage by 1/2. Needs new mod settings to control health and damage changes. New command option to specify this special biter or maybe just including supporter name does it given the name isn't used or tracked for anything else?
     - when a biter pack is targeted at spawn after killing their player don't discard the group, update GUI and track them still. As odd to see no biter packs on GUI, but a horde at spawn.
     - a draw option for packs after x time.
     - after a draw or biters getting stuck (wondering) or they wonder after reaching spawn make them turn in to biter nests or die as option.
