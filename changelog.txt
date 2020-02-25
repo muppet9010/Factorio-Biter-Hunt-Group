@@ -1,6 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 18.0.4
+Date: 2020-02-16
+  Features:
+  Changes:
+    - use latest GUI & style library for compatibility with my other mods
+  Bugfixes:
+  Info:
+---------------------------------------------------------------------------------------------------
 Version: 18.0.3
-Date: 2020-02-23
+Date: 2020-02-02
   Features:
   Changes:
   Bugfixes:
