@@ -268,29 +268,29 @@ end
 
 Groups.AddBitersToGroup = function(commandData)
     local args = Commands.GetArgumentsFromCommand(commandData.parameter)
-    if #args == 2 then
-        local groupId_string = args[1]
-        local groupId = tonumber(groupId_string)
-        if not Groups.IsCommandArgumentAValidGroup(groupId, groupId_string, commandData.name) then
-            return
-        end
-
-        local biterToAdd_string = args[2]
-        local bitersToAdd = tonumber(biterToAdd_string)
-        if bitersToAdd == nil then
-            Logging.LogPrint(commandData.name .. " command called with non numerical biters to add: " .. tostring(biterToAdd_string))
-            return
-        end
-        bitersToAdd = Utils.RoundNumberToDecimalPlaces(bitersToAdd, 0)
-
-        local group = global.groups[groupId]
-        local groupLastPack = Utils.GetMaxKey(group.packs)
-        local pack = group.packs[groupLastPack]
-        Interfaces.Call("Packs.AddBiterCountToPack", pack, bitersToAdd)
-    else
+    if #args ~= 2 then
         Logging.LogPrint(commandData.name .. " command called with wrong number of arguments. Expected 2, but got: " .. tostring(commandData.parameter))
         return
     end
+
+    local groupId_string = args[1]
+    local groupId = tonumber(groupId_string)
+    if not Groups.IsCommandArgumentAValidGroup(groupId, groupId_string, commandData.name) then
+        return
+    end
+
+    local biterToAdd_string = args[2]
+    local bitersToAdd = tonumber(biterToAdd_string)
+    if bitersToAdd == nil then
+        Logging.LogPrint(commandData.name .. " command called with non numerical biters to add: " .. tostring(biterToAdd_string))
+        return
+    end
+    bitersToAdd = Utils.RoundNumberToDecimalPlaces(bitersToAdd, 0)
+
+    local group = global.groups[groupId]
+    local groupLastPack = Utils.GetMaxKey(group.packs)
+    local pack = group.packs[groupLastPack]
+    Interfaces.Call("Packs.AddBiterCountToPack", pack, bitersToAdd)
 end
 
 Groups.IsCommandArgumentAValidGroup = function(groupId, stringValue, commandName)
@@ -312,22 +312,21 @@ end
 
 Groups.ResetGroupsPackTimer = function(commandData)
     local args = Commands.GetArgumentsFromCommand(commandData.parameter)
-    if #args == 1 then
-        local groupId_string = args[1]
-        local groupId = tonumber(groupId_string)
-        if not Groups.IsCommandArgumentAValidGroup(groupId, groupId_string, commandData.name) then
-            return
-        end
-
-        local group = global.groups[groupId]
-        local groupLastPack = Utils.GetMaxKey(group.packs)
-        local pack = group.packs[groupLastPack]
-
-        Interfaces.Call("Packs.ResetPackTimer", group, pack)
-    else
+    if #args ~= 1 then
         Logging.LogPrint(commandData.name .. " command called with wrong number of arguments. Expected 1, but got: " .. tostring(commandData.parameter))
         return
     end
+    local groupId_string = args[1]
+    local groupId = tonumber(groupId_string)
+    if not Groups.IsCommandArgumentAValidGroup(groupId, groupId_string, commandData.name) then
+        return
+    end
+
+    local group = global.groups[groupId]
+    local groupLastPack = Utils.GetMaxKey(group.packs)
+    local pack = group.packs[groupLastPack]
+
+    Interfaces.Call("Packs.ResetPackTimer", group, pack)
 end
 
 return Groups
