@@ -17,25 +17,25 @@ The player/spawn will be surrounded in a circle by a configurable number of tunn
 The hunt will be over when either the biters are all killed (player wins) or the targeted player dies from any means (biters win). If the targeted player disconnects from the server they will be classed as losing. If the player loses then the biters will rampage towards spawn destroying everything they encounter. In all cases, the results are recorded within the mod for export later for external use (see commands). The result is also broadcast via in-game messages to all players. Note, as the next pack of a group is scheduled in the future when one targets a player it is possible to have multiple packs for a group alive at one time if they aren't dealt with.
 
 
-Mutliple Group Configurations
+Multiple Group Configurations
 ---------------
 
-The mod supports the simplier usage of a single group with packs behaving as covered in the Detailed Explanation above. In this case each mod setting should have just 1 setting entered in the natural way for numbers or text.
+The mod supports the simpler usage of a single group with packs behaving as covered in the Detailed Explanation above. In this case each mod setting should have just 1 setting entered in the natural way for numbers or text.
 
-The mod also supports multiple groups to be configured and each have active packs simultaniously (N groups with N active packs). This means each group's packs follows the Detailed Explanation above with their own settings. This is configured by each mod setting accepting an array [] of values in JSON format. Each sequential item in the array being applied to a corrisponding group. Should any mod setting include an array entry for a group then that group will be generated.
+The mod also supports multiple groups to be configured and each have active packs simultaneously (N groups with N active packs). This means each group's packs follows the Detailed Explanation above with their own settings. This is configured by each mod setting accepting an array [] of values in JSON format. Each sequential item in the array being applied to a corresponding group. Should any mod setting include an array entry for a group then that group will be generated.
 Example, a mod setting with the value of [2,10,3] would create 3 groups each having their sequential values.
 
 If a mod setting only has 1 value then it is taken as a global default value and applied to all groups. In the case of a mismatch of group quantity between multiple mod settings the mod's default settings are used when needed to avoid errors, i.e. one mod setting has 2 array entries ([1,2]) and another mod setting has 3 array entries ([1,2,3]). A group's ID is just its order in a mod setting array and may be needed for some commands.
 
 The mod settings which take a list like "Players Targeted" expect an array or arrays when multiple groups have unique settings. i.e. [ ["player1", "player2"], ["player3"], [] ]. In this case group 1 would target players name "player1" and "player2", group 2 would only target "player3" and group 3 would target all players on the server.
 
-Note: at present should a mod setting be invalid the warning message is written to the logs and printed ingame. However, the ingame message isn't visible to players when starting a new game due to how Factorio works. I am looking for a solution/workaround for this limitation.
+Note: at present should a mod setting be invalid the warning message is written to the logs and printed in-game. However, the in-game message isn't visible to players when starting a new game due to how Factorio works. I am looking for a solution/workaround for this limitation.
 
 
 Biter Quantity Formula Setting
 --------------
 
-This is a special setting really intended for use with the command "biters_hunt_group_add_biters". The formula is applied when a pack is spawned in the map and takes the number of biters to be created and applies the formula to it to get the final qunatity of biters. This allows for external integrations to add biters using the command in a simple fashion and then a scaling formula can be applied to it. The formula must be valid Lua written as a "return" line to be run within the mod. The biter count will be passed in as a Lua variable "biterCount". Default is blank/empty and the standard mutliple group configuration applies.
+This is a special setting really intended for use with the command "biters_hunt_group_add_biters". The formula is applied when a pack is spawned in the map and takes the number of biters to be created and applies the formula to it to get the final quantity of biters. This allows for external integrations to add biters using the command in a simple fashion and then a scaling formula can be applied to it. The formula must be valid Lua written as a "return" line to be run within the mod. The biter count will be passed in as a Lua variable "biterCount". Default is blank/empty and the standard multiple group configuration applies.
 Example of multi group configuration: ["", "math.floor(biterCount * 2.5)"]
 
 
@@ -48,10 +48,10 @@ Advised Other Mods
 Commands
 ------------
 
-- Command to trigger all of the configured biter hunting groups to send their next scheduled pack to attack now is "biter_hunt_group_attack_now". If multiple groups are configured via settings then individual groups can be triggered by providing their sequential ID after the command, i.e: "biter_hunt_group_attack_now 1".
-- Command to write out all of the biter hunt group's results as JSON: biter_hunt_group_write_out_results
-- Command to add biters to the next pack for a group. Requires agruments for the group ID, the number of biters to add and if to reset the random timer (true/false). "biter_hunt_group_add_biters [groupId] [biterNumber]", i.e. biter_hunt_group_add_biters 1 5
-- Command to reset a groups current scheduled pack's random timer. Requires argument for the group ID. "biter_hunt_group_reset_group_timer [groupId]", i.e. biter_hunt_group_reset_group_timer 1
+- `biter_hunt_group_attack_now` - Command to trigger all of the configured biter hunting groups to send their next scheduled pack to attack now. If multiple groups are configured via settings then individual groups can be triggered by providing their sequential ID after the command, i.e: "/biter_hunt_group_attack_now 1".
+- `biter_hunt_group_write_out_results` - Command to write out all of the biter hunt group's results as JSON
+- `biter_hunt_group_add_biters` - Command to add biters to the next pack for a group. Requires agruments for the group ID and the number of biters to add. i.e. add to group 1, 5 biters: "/biter_hunt_group_add_biters 1 5"
+- `biter_hunt_group_reset_group_timer` - Command to reset a groups current scheduled pack's random timer. Requires argument for the group ID. i.e. "/biter_hunt_group_reset_group_timer 1"
 
 
 Mod Compatibility

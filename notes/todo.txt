@@ -3,6 +3,8 @@ Next:
     - add option to show number of biters left on the hunting gui. should be a __3__ and update on each biter death.
 	- make first biter start at a random angle rather than always 0.
 	- if a biter count formula is in use have it write to game text the number of raw biters and the formula biter count.
+    - mod options for whitelist and blacklist surfaces where biters can appear. Not blacklisted surfaces, if whitelisted then only them, otherwise all non blacklisted.
+    - handle if the player leaves a surface mid hunt - send them rampaging towards spawn, but don't declare it a win.
 
 Future:
     - track supporter names against raw biter count and apply their names to a special tinted gold biter for each supporter. Select a highest evo biter type (not spitter) and up its health by x2  and reduce damage by 1/2. Needs new mod settings to control health and damage changes. New command option to specify this special biter or maybe just including supporter name does it given the name isn't used or tracked for anything else?

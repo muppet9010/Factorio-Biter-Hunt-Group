@@ -5,6 +5,7 @@ Date: 2020-12-04
     - Updated to Factorio 1.1.
   Changes:
   Bugfixes:
+    - If target player leaves the surface redirect biters at spawn, used to error.
   Info:
 ---------------------------------------------------------------------------------------------------
 Version: 18.0.5

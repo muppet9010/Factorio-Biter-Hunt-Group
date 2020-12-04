@@ -327,6 +327,9 @@ Packs.CommandEnemies = function(pack)
         Packs.TargetBitersAtSpawnFromError(pack)
         return
     end
+    if targetEntity ~= nil and pack.surface ~= targetEntity.surface then
+        Packs.OnPlayerLeftSurface(pack)
+    end
     local attackCommand
     if targetEntity ~= nil then
         Logging.Log("CommandEnemies - targetEntity not nil - targetEntity: " .. targetEntity.name, debug)
@@ -403,7 +406,10 @@ Packs.RecordResult = function(outcome, pack)
         --not reached at present
         game.print("[img=entity.medium-biter]      [img=entity.character]" .. pack.targetName .. " draw")
         pack.finalResultReached = true
-    elseif outcome == "playerLeft" then
+    elseif outcome == "playerLeftGame" then
+        game.print("[img=entity.medium-biter]      [img=entity.character]" .. pack.targetName .. " fled like a coward")
+        pack.finalResultReached = true
+    elseif outcome == "playerLeftSurface" then
         game.print("[img=entity.medium-biter]      [img=entity.character]" .. pack.targetName .. " fled like a coward")
         pack.finalResultReached = true
     elseif outcome == "hunting" then
@@ -448,13 +454,19 @@ Packs.OnPlayerLeftGame = function(event)
     local playerId = event.player_index
     local playerWasATarget = false
     for _, pack in pairs(Packs.GetPacksPlayerIdIsATargetFor(playerId)) do
-        Packs.RecordResult("playerLeft", pack)
+        Packs.RecordResult("playerLeftGame", pack)
         Packs.TargetBitersAtSpawn(pack)
         playerWasATarget = true
     end
     if playerWasATarget then
         Interfaces.Call("Gui.UpdateAllConnectedPlayers")
     end
+end
+
+Packs.OnPlayerLeftSurface = function(pack)
+    Packs.RecordResult("playerLeftSurface", pack)
+    Packs.TargetBitersAtSpawn(pack)
+    Interfaces.Call("Gui.UpdateAllConnectedPlayers")
 end
 
 Packs.OnPlayerDrivingChangedState = function(event)
