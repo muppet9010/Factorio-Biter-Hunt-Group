@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 20.0.7
+Date: 2022-03-04
+  Features:
+  Changes:
+  Bugfixes:
+    - Fix error when a players GUI wrapper has vanished unexpectedly. The mod now recreates it when needed. Not sure why this occurs some times, suspect other mods or a scenario is closing it. As this mod never removes the player's GUI wrapper and creates it on the player joining the server.
+  Info:
+---------------------------------------------------------------------------------------------------
 Version: 20.0.6
 Date: 2020-12-04
   Features:

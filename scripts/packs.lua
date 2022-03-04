@@ -517,7 +517,7 @@ Packs.UpdateProcessedBiterPackSize = function(pack)
     local success, processedValue =
         pcall(
         function()
-            return loadstring("local biterCount = " .. pack.rawPackSize .. "; return " .. formula)()
+            return load("local biterCount = " .. pack.rawPackSize .. "; return " .. formula)()
         end
     )
     if not success then

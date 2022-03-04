@@ -3,8 +3,6 @@ local GUIUtil = require("utility/gui-util")
 local SharedData = require("scripts/shared-data")
 local Interfaces = require("utility/interfaces")
 local Colors = require("utility/colors")
---local Utils = require("utility/utils")
---local Logging = require("utility/logging")
 
 Gui.OnLoad = function()
     Interfaces.RegisterInterface("Gui.RecreateAll", Gui.RecreateAll)
@@ -66,6 +64,16 @@ Gui.UpdatePlayer = function(playerIndex)
     local mainFrameElement = GUIUtil.GetElementFromPlayersReferenceStorage(playerIndex, "biterhuntgroup", "main", "frame")
     local huntingFlowElement = GUIUtil.GetElementFromPlayersReferenceStorage(playerIndex, "biterhuntgroup", "hunting", "flow")
     local incomingFlowElement = GUIUtil.GetElementFromPlayersReferenceStorage(playerIndex, "biterhuntgroup", "incoming", "flow")
+
+    -- Handle if any of the GUI's have been removed somehow. Don't see how this mod could have done it, but maybe other mods are?
+    if mainFrameElement == nil or not mainFrameElement.valid or huntingFlowElement == nil or not huntingFlowElement.valid or incomingFlowElement == nil or not incomingFlowElement.valid then
+        -- Recreate the player's GUI and then end this function. The recreation of the whole GUI will have recalled this function after recreating the container frame and flows.
+        local player = game.get_player(playerIndex)
+        game.print("Biter Hunt Group - recreating " .. player.name .. "'s GUI as it has disappeared for an unknown reason", Colors.red)
+        Gui.RecreatePlayer(player)
+        return
+    end
+
     huntingFlowElement.clear()
     incomingFlowElement.clear()
     local mainVisible, huntingVisible, incommingVisible = false, false, false
