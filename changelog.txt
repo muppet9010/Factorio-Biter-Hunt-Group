@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 20.0.8
+Date: 2022-04-17
+  Features:
+  Changes:
+  Bugfixes:
+  Info:
+    - Remove the warning text that was shown when the GUI was found to be missing. This has been identified as being a common issue with how many scenarios (redmew/comfy) work.
+---------------------------------------------------------------------------------------------------
 Version: 20.0.7
 Date: 2022-03-04
   Features:

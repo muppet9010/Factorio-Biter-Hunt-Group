@@ -69,7 +69,6 @@ Gui.UpdatePlayer = function(playerIndex)
     if mainFrameElement == nil or not mainFrameElement.valid or huntingFlowElement == nil or not huntingFlowElement.valid or incomingFlowElement == nil or not incomingFlowElement.valid then
         -- Recreate the player's GUI and then end this function. The recreation of the whole GUI will have recalled this function after recreating the container frame and flows.
         local player = game.get_player(playerIndex)
-        game.print("Biter Hunt Group - recreating " .. player.name .. "'s GUI as it has disappeared for an unknown reason", Colors.red)
         Gui.RecreatePlayer(player)
         return
     end

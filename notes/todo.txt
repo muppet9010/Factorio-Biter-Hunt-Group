@@ -1,5 +1,4 @@
 Next:
-    - remove message being printed when the GUI is found to be missing.
     - make targeted players accept a single name out of json format
     - add option to show number of biters left on the hunting gui. should be a __3__ and update on each biter death.
 	- make first biter start at a random angle rather than always 0.
