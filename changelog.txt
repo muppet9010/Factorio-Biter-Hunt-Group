@@ -1,4 +1,15 @@
 ---------------------------------------------------------------------------------------------------
+Version: 20.0.9
+Date: 2022-09-03
+  Features:
+  Changes:
+  Bugfixes:
+    - Improve messages shown in handled error state when the biters are then sent at spawn as a fallback behaviour.
+    - Detect when a targeted player's vehicle is killed and handle it the same as if the player got out of it. Previously this was being treated as a handled error (biters get targeted at spawn).
+    - When a player got out of a targeted vehicle the biters weren't being updated correctly to retarget the player due to a code typo. This would have left the biters chasing the wrong target and could have caused a handled error (biters get targeted at spawn).
+  Info:
+    - Licence updated.
+---------------------------------------------------------------------------------------------------
 Version: 20.0.8
 Date: 2022-04-17
   Features:

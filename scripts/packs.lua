@@ -1,5 +1,8 @@
---Packs manages a biter hunt group once triggered and calls back to the Groupss supplied functions when needed.
---Group is the reoccuring collection of a group of settings. A Pack is a specific instance of a group.
+-- Packs manages a biter hunt group once triggered and calls back to the Groups supplied functions when needed.
+-- Group is the reoccurring collection of a group of settings. A Pack is a specific instance of a group.
+
+-- This is all very old code and in a bad style. Maybe it will get fully refactored some day, but for now just fix odd issue that crops up.
+-- Not compatible with Sumneko checks, so the checking of files is largely disabled in the project.
 
 local Packs = {}
 local Utils = require("utility/utils")
@@ -34,7 +37,7 @@ Packs.CreateNextPackForGroup = function(group)
     pack.id = group.lastPackId
     pack.group = group
     group.packs[pack.id] = pack
-    group.results[pack.id] = {outcome = "scheduled", targetName = nil}
+    group.results[pack.id] = { outcome = "scheduled", targetName = nil }
     pack.state = SharedData.biterHuntGroupState.scheduled
     pack.units = {}
     pack.targetPlayerID = nil
@@ -96,7 +99,7 @@ Packs.PackAction_Warning = function(event)
     pack.state = SharedData.biterHuntGroupState.warning
     Interfaces.Call("Gui.UpdateAllConnectedPlayers")
     local nextPackActionTick = tick + pack.warningTicks
-    EventScheduler.ScheduleEvent(nextPackActionTick, "Packs.PackAction_GroundMovement", uniqueId, {pack = pack})
+    EventScheduler.ScheduleEvent(nextPackActionTick, "Packs.PackAction_GroundMovement", uniqueId, { pack = pack })
 end
 
 Packs.PackAction_GroundMovement = function(event)
@@ -109,7 +112,7 @@ Packs.PackAction_GroundMovement = function(event)
     Packs.RecordResult("hunting", pack)
     Packs.CreateGroundMovement(pack)
     local nextPackActionTick = tick + pack.tunnellingTicks - biterHuntGroupPreTunnelEffectTime
-    EventScheduler.ScheduleEvent(nextPackActionTick, "Packs.PackAction_PreSpawnEffect", uniqueId, {pack = pack})
+    EventScheduler.ScheduleEvent(nextPackActionTick, "Packs.PackAction_PreSpawnEffect", uniqueId, { pack = pack })
 end
 
 Packs.PackAction_PreSpawnEffect = function(event)
@@ -117,7 +120,7 @@ Packs.PackAction_PreSpawnEffect = function(event)
     pack.state = SharedData.biterHuntGroupState.preBitersSpawnEffect
     Packs.SpawnEnemyPreEffects(pack)
     local nextPackActionTick = tick + biterHuntGroupPreTunnelEffectTime
-    EventScheduler.ScheduleEvent(nextPackActionTick, "Packs.PackAction_SpawnBiters", uniqueId, {pack = pack})
+    EventScheduler.ScheduleEvent(nextPackActionTick, "Packs.PackAction_SpawnBiters", uniqueId, { pack = pack })
 end
 
 Packs.PackAction_SpawnBiters = function(event)
@@ -126,7 +129,7 @@ Packs.PackAction_SpawnBiters = function(event)
     Packs.SpawnEnemies(pack)
     Packs.CommandEnemies(pack)
     local nextPackActionTick = tick + 60
-    EventScheduler.ScheduleEvent(nextPackActionTick, "Packs.PackAction_BitersActive", uniqueId, {pack = pack})
+    EventScheduler.ScheduleEvent(nextPackActionTick, "Packs.PackAction_BitersActive", uniqueId, { pack = pack })
 end
 
 Packs.PackAction_BitersActive = function(event)
@@ -144,7 +147,7 @@ Packs.PackAction_BitersActive = function(event)
     else
         Packs.CommandEnemies(pack)
         local nextPackActionTick = tick + 60
-        EventScheduler.ScheduleEvent(nextPackActionTick, "Packs.PackAction_BitersActive", uniqueId, {pack = pack})
+        EventScheduler.ScheduleEvent(nextPackActionTick, "Packs.PackAction_BitersActive", uniqueId, { pack = pack })
     end
 end
 
@@ -173,7 +176,7 @@ Packs.SelectTarget = function(pack)
     else
         for _, playerName in pairs(pack.validTargetPlayerNameList) do
             local player = game.get_player(playerName)
-            if player ~= nil and player.valid and player.connected and (player.vehicle ~= nil or player.character ~= nil) and Packs.ValidSurface(player.surface) then
+            if player ~= nil and player.connected and (player.vehicle ~= nil or player.character ~= nil) and Packs.ValidSurface(player.surface) then
                 table.insert(validPlayers, player)
             end
         end
@@ -225,7 +228,7 @@ Packs._CreateGroundMovement = function(pack, distance, attempts)
     for i = 1, packSize do
         local x = centerPosition.x + (distance * math.cos(angleRad * i))
         local y = centerPosition.y + (distance * math.sin(angleRad * i))
-        local foundPosition = surface.find_non_colliding_position("biter_hunt_group-biter_ground_movement", {x, y}, 2, 1, true)
+        local foundPosition = surface.find_non_colliding_position("biter_hunt_group-biter_ground_movement", { x, y }, 2, 1, true)
         if foundPosition ~= nil then
             table.insert(biterPositions, foundPosition)
         end
@@ -270,7 +273,7 @@ Packs._CreateGroundMovement = function(pack, distance, attempts)
 end
 
 Packs.SpawnGroundMovementEffect = function(pack, surface, position)
-    local effect = surface.create_entity {name = "biter_hunt_group-biter_ground_movement", position = position}
+    local effect = surface.create_entity { name = "biter_hunt_group-biter_ground_movement", position = position }
     if effect == nil then
         Logging.LogPrint("failed to make effect at: " .. Logging.PositionToString(position))
     else
@@ -283,10 +286,10 @@ Packs.SpawnEnemyPreEffects = function(pack)
     local surface = pack.surface
     for _, groundEffect in pairs(pack.groundMovementEffects) do
         if not groundEffect.valid then
-            Logging.LogPrint("ground effect has been removed by something, no SpawnEnemiePreEffects can be made")
+            Logging.LogPrint("ground effect has been removed by something, no SpawnEnemyPreEffects can be made")
         else
             local position = groundEffect.position
-            surface.create_entity {name = "biter_hunt_group-biter_ground_rise_effect", position = position}
+            surface.create_entity { name = "biter_hunt_group-biter_ground_rise_effect", position = position }
         end
     end
 end
@@ -294,7 +297,7 @@ end
 Packs.SpawnEnemies = function(pack)
     local surface = pack.surface
     local biterForce = game.forces["enemy"]
-    local spawnerTypes = {"biter-spawner", "spitter-spawner"}
+    local spawnerTypes = { "biter-spawner", "spitter-spawner" }
     local evolution = Utils.RoundNumberToDecimalPlaces(biterForce.evolution_factor + pack.evolutionBonus, 3)
     for _, groundEffect in pairs(pack.groundMovementEffects) do
         if not groundEffect.valid then
@@ -304,7 +307,7 @@ Packs.SpawnEnemies = function(pack)
             groundEffect.destroy()
             local spawnerType = spawnerTypes[math.random(2)]
             local enemyType = Utils.GetBiterType(global.EnemyProbabilities, spawnerType, evolution)
-            local unit = surface.create_entity {name = enemyType, position = position, force = biterForce}
+            local unit = surface.create_entity { name = enemyType, position = position, force = biterForce }
             if unit == nil then
                 Logging.LogPrint("failed to make unit at: " .. Logging.PositionToString(position))
             else
@@ -323,9 +326,21 @@ Packs.CommandEnemies = function(pack)
     end
     local targetEntity = pack.targetEntity
     if targetEntity ~= nil and not targetEntity.valid then
-        Logging.LogPrint("ERROR - Biter target entity is invalid from command enemies - REPORT AS ERROR")
-        Packs.TargetBitersAtSpawnFromError(pack)
-        return
+        -- Expected target not right any more.
+
+        -- Look for a replacement target. This is needed as we don;t track entities being killed, removed via scripts etc.
+        local player = game.get_player(pack.targetPlayerID)
+        if player.vehicle ~= nil then
+            pack.targetEntity = player.vehicle
+        elseif player.character ~= nil then
+            pack.targetEntity = player.character
+        else
+            -- Can't find a replacement target.
+            Logging.LogPrint("ERROR - Biter target entity is invalid from command enemies - REPORT AS ERROR")
+            Packs.TargetBitersAtSpawnFromError(pack)
+            return
+        end
+        targetEntity = pack.targetEntity
     end
     if targetEntity ~= nil and pack.surface ~= targetEntity.surface then
         Packs.OnPlayerLeftSurface(pack)
@@ -333,11 +348,11 @@ Packs.CommandEnemies = function(pack)
     local attackCommand
     if targetEntity ~= nil then
         Logging.Log("CommandEnemies - targetEntity not nil - targetEntity: " .. targetEntity.name, debug)
-        attackCommand = {type = defines.command.attack, target = targetEntity, distraction = defines.distraction.none}
+        attackCommand = { type = defines.command.attack, target = targetEntity, distraction = defines.distraction.none }
     else
         Logging.Log("CommandEnemies - targetEntity is nil - target spawn", debug)
         pack.hasBeenTargetedAtSpawn = true
-        attackCommand = {type = defines.command.attack_area, destination = Packs.GetPositionForTarget(pack), radius = 20, distraction = defines.distraction.by_anything}
+        attackCommand = { type = defines.command.attack_area, destination = Packs.GetPositionForTarget(pack), radius = 20, distraction = defines.distraction.by_anything }
     end
     for i, unit in pairs(pack.units) do
         if unit.valid then
@@ -349,7 +364,7 @@ Packs.CommandEnemies = function(pack)
                 if unit.command.type == defines.command.attack then
                     if targetEntity == nil then
                         applyCommand = true
-                        Logging.Log("unit " .. i .. " attack nill target", debug)
+                        Logging.Log("unit " .. i .. " attack nil target", debug)
                     elseif unit.command.target == nil then
                         applyCommand = true
                         Logging.Log("unit " .. i .. " attack no target", debug)
@@ -415,6 +430,9 @@ Packs.RecordResult = function(outcome, pack)
     elseif outcome == "hunting" then
         local biterTargetPos = Packs.GetPositionForTarget(pack)
         game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter]" .. " hunting " .. pack.targetName .. " at [gps=" .. math.floor(biterTargetPos.x) .. "," .. math.floor(biterTargetPos.y) .. "]")
+    elseif outcome == "error" then
+        -- Error state detected and alerted at the time.
+        pack.finalResultReached = true
     else
         Logging.LogPrint("ERROR: unrecognised result outcome: " .. outcome)
         outcome = "error"
@@ -474,9 +492,9 @@ Packs.OnPlayerDrivingChangedState = function(event)
     for _, pack in pairs(Packs.GetPacksPlayerIdIsATargetFor(playerId)) do
         local player = game.get_player(playerId)
         if player.vehicle ~= nil then
-            pack.TargetEntity = player.vehicle
+            pack.targetEntity = player.vehicle
         elseif player.character ~= nil then
-            pack.TargetEntity = player.character
+            pack.targetEntity = player.character
         else
             Logging.LogPrint("PANIC - player driving state changed and no vehicle or body!")
             Packs.TargetBitersAtSpawnFromError(pack)
@@ -492,7 +510,7 @@ end
 Packs.SchedulePackWarningEvent = function(group, pack)
     local packActionTick = game.tick + Packs.GetPackRandomTime(group)
     local uniqueId = Packs.GenerateUniqueId(group.id, pack.id)
-    EventScheduler.ScheduleEvent(packActionTick, "Packs.PackAction_Warning", uniqueId, {pack = pack})
+    EventScheduler.ScheduleEvent(packActionTick, "Packs.PackAction_Warning", uniqueId, { pack = pack })
 end
 
 Packs.GetPackRandomTime = function(group)
@@ -515,7 +533,7 @@ Packs.UpdateProcessedBiterPackSize = function(pack)
         return
     end
     local success, processedValue =
-        pcall(
+    pcall(
         function()
             return load("local biterCount = " .. pack.rawPackSize .. "; return " .. formula)()
         end

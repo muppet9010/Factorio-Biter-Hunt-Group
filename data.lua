@@ -33,7 +33,7 @@ data:extend(
                             speed_from_center_deviation = 0.05,
                             initial_vertical_speed = 0.10,
                             initial_vertical_speed_deviation = 0.05,
-                            offset_deviation = {{-0.2, -0.2}, {0.2, 0.2}}
+                            offset_deviation = { { -0.2, -0.2 }, { 0.2, 0.2 } }
                         }
                     }
                 }
@@ -42,7 +42,7 @@ data:extend(
         {
             type = "trivial-smoke",
             name = "biter_hunt_group-biter_rise_smoke",
-            flags = {"not-on-map"},
+            flags = { "not-on-map" },
             show_when_smoke_off = true,
             animation = {
                 width = 152,
@@ -53,17 +53,17 @@ data:extend(
                 filename = "__base__/graphics/entity/smoke/smoke.png"
             },
             affected_by_wind = false,
-            color = {r = 0.66, g = 0.58, b = 0.49, a = 1},
+            color = { r = 0.66, g = 0.58, b = 0.49, a = 1 },
             duration = 240,
             fade_away_duration = 30
         },
         {
             type = "simple-entity",
             name = "biter_hunt_group-biter_ground_movement",
-            collision_box = {{-0.5, -0.5}, {0.5, 0.5}},
-            collision_maxk = {"object-layer", "player-layer", "water-tile"},
+            collision_box = { { -0.5, -0.5 }, { 0.5, 0.5 } },
+            collision_mask = { "object-layer", "player-layer", "water-tile" },
             selectable_in_game = false,
-            pictures = Utils.DeepCopy(data.raw["simple-entity"]["sand-rock-big"].pictures),
+            pictures = Utils.DeepCopy(data.raw["simple-entity"]["sand-rock-big"].pictures--[[@as Sprite[] ]] ) --[[@as Sprite[] ]] ,
             created_effect = {
                 type = "direct",
                 action_delivery = {
@@ -73,7 +73,7 @@ data:extend(
                             type = "create-trivial-smoke",
                             smoke_name = "biter_hunt_group-biter_rise_smoke",
                             repeat_count = 3,
-                            offset_deviation = {{-0.5, -0.5}, {0.5, 0.5}},
+                            offset_deviation = { { -0.5, -0.5 }, { 0.5, 0.5 } },
                             starting_frame_deviation = 10
                         }
                     }
@@ -84,10 +84,11 @@ data:extend(
 )
 
 if mods["BigWinter"] ~= nil then
-    local biterGroundMovement = data.raw["simple-entity"]["biter_hunt_group-biter_ground_movement"]
-    for _, picture in pairs(biterGroundMovement.pictures) do
+    local biterGroundMovement = data.raw["simple-entity"]["biter_hunt_group-biter_ground_movement"] ---@cast biterGroundMovement -nil
+    local biterGroundMovement_pictures = biterGroundMovement.pictures ---@cast biterGroundMovement_pictures Sprite[]
+    for _, picture in pairs(biterGroundMovement_pictures) do
         picture.filename = string.gsub(picture.filename, "__base__", "__BigWinter__")
     end
     local biterRiseSmoke = data.raw["trivial-smoke"]["biter_hunt_group-biter_rise_smoke"]
-    biterRiseSmoke.color = {r = 223, g = 230, b = 242, a = 1}
+    biterRiseSmoke.color = { r = 223.0, g = 230.0, b = 242.0, a = 1.0 }
 end
