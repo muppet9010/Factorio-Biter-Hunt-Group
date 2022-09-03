@@ -1,5 +1,8 @@
---Packs manages a biter hunt group once triggered and calls back to the Groups supplied functions when needed.
---Group is the reoccurring collection of a group of settings. A Pack is a specific instance of a group.
+-- Packs manages a biter hunt group once triggered and calls back to the Groups supplied functions when needed.
+-- Group is the reoccurring collection of a group of settings. A Pack is a specific instance of a group.
+
+-- This is all very old code and in a bad style. Maybe it will get fully refactored some day, but for now just fix odd issue that crops up.
+-- Not compatible with Sumneko checks, so the checking of files is largely disabled in the project.
 
 local Packs = {}
 local Utils = require("utility/utils")
@@ -173,7 +176,7 @@ Packs.SelectTarget = function(pack)
     else
         for _, playerName in pairs(pack.validTargetPlayerNameList) do
             local player = game.get_player(playerName)
-            if player ~= nil and player.valid and player.connected and (player.vehicle ~= nil or player.character ~= nil) and Packs.ValidSurface(player.surface) then
+            if player ~= nil and player.connected and (player.vehicle ~= nil or player.character ~= nil) and Packs.ValidSurface(player.surface) then
                 table.insert(validPlayers, player)
             end
         end
@@ -323,9 +326,21 @@ Packs.CommandEnemies = function(pack)
     end
     local targetEntity = pack.targetEntity
     if targetEntity ~= nil and not targetEntity.valid then
-        Logging.LogPrint("ERROR - Biter target entity is invalid from command enemies - REPORT AS ERROR")
-        Packs.TargetBitersAtSpawnFromError(pack)
-        return
+        -- Expected target not right any more.
+
+        -- Look for a replacement target. This is needed as we don;t track entities being killed, removed via scripts etc.
+        local player = game.get_player(pack.targetPlayerID)
+        if player.vehicle ~= nil then
+            pack.targetEntity = player.vehicle
+        elseif player.character ~= nil then
+            pack.targetEntity = player.character
+        else
+            -- Can't find a replacement target.
+            Logging.LogPrint("ERROR - Biter target entity is invalid from command enemies - REPORT AS ERROR")
+            Packs.TargetBitersAtSpawnFromError(pack)
+            return
+        end
+        targetEntity = pack.targetEntity
     end
     if targetEntity ~= nil and pack.surface ~= targetEntity.surface then
         Packs.OnPlayerLeftSurface(pack)
@@ -477,9 +492,9 @@ Packs.OnPlayerDrivingChangedState = function(event)
     for _, pack in pairs(Packs.GetPacksPlayerIdIsATargetFor(playerId)) do
         local player = game.get_player(playerId)
         if player.vehicle ~= nil then
-            pack.TargetEntity = player.vehicle
+            pack.targetEntity = player.vehicle
         elseif player.character ~= nil then
-            pack.TargetEntity = player.character
+            pack.targetEntity = player.character
         else
             Logging.LogPrint("PANIC - player driving state changed and no vehicle or body!")
             Packs.TargetBitersAtSpawnFromError(pack)

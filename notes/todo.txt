@@ -1,12 +1,5 @@
 Bugs:
-	- Biters lost target unexpectedly:
-		- Player in train.
-		- Biters called in, start rocks effect.
-		- Player rides train far off.
-		- Player gets out of train and picks it up (biters may or may not have emerged from rocks at this point).
-		- Warning message shown and biters targetted at spawn:
-			ERROR - Biter target entity is invalid from command enemies - REPORT AS ERROR
-		- Biters targeted at spawn and appropriate message shown.
+
 
 Next:
     - make targeted players accept a single name out of json format
@@ -15,6 +8,7 @@ Next:
 	- if a biter count formula is in use have it write to game text the number of raw biters and the formula biter count.
     - mod options for whitelist and blacklist surfaces where biters can appear. Not blacklisted surfaces, if whitelisted then only them, otherwise all non blacklisted.
     - handle if the player leaves a surface mid hunt - send them rampaging towards spawn, but don't declare it a win.
+
 
 Future:
     - track supporter names against raw biter count and apply their names to a special tinted gold biter for each supporter. Select a highest evo biter type (not spitter) and up its health by x2  and reduce damage by 1/2. Needs new mod settings to control health and damage changes. New command option to specify this special biter or maybe just including supporter name does it given the name isn't used or tracked for anything else?

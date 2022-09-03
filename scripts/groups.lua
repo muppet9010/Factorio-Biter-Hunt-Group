@@ -1,5 +1,9 @@
---Groups controls the triggering of biter hunt group creations and receives any commands and external events
---Group is the reoccurring collection of a group of settings. A Pack is a specific instance of a group.
+-- Groups controls the triggering of biter hunt group creations and receives any commands and external events
+-- Group is the reoccurring collection of a group of settings. A Pack is a specific instance of a group.
+
+-- This is all very old code and in a bad style. Maybe it will get fully refactored some day, but for now just fix odd issue that crops up.
+-- Not compatible with Sumneko checks, so the checking of files is largely disabled in the project.
+
 local Utils = require("utility/utils")
 local Logging = require("utility/logging")
 local Commands = require("utility/commands")

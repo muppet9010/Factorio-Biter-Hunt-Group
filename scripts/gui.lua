@@ -1,3 +1,6 @@
+-- This is all very old code and in a bad style. Maybe it will get fully refactored some day, but for now just fix odd issue that crops up.
+-- Not compatible with Sumneko checks, so the checking of files is largely disabled in the project.
+
 local Gui = {}
 local GUIUtil = require("utility/gui-util")
 local SharedData = require("scripts/shared-data")
