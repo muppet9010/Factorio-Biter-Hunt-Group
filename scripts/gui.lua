@@ -31,7 +31,7 @@ Gui.CreateGUI = function(player)
             style = "muppet_frame_main_marginTL_paddingBR",
             storeName = "biterhuntgroup",
             visible = false,
-            styling = {right_padding = 4, bottom_padding = 4},
+            styling = { right_padding = 4, bottom_padding = 4 },
             children = {
                 {
                     name = "hunting",
@@ -75,7 +75,7 @@ Gui.UpdatePlayer = function(playerIndex)
 
     huntingFlowElement.clear()
     incomingFlowElement.clear()
-    local mainVisible, huntingVisible, incommingVisible = false, false, false
+    local mainVisible, huntingVisible, incomingVisible = false, false, false
 
     for _, group in pairs(global.groups) do
         for _, pack in pairs(group.packs) do
@@ -87,7 +87,7 @@ Gui.UpdatePlayer = function(playerIndex)
                         type = "frame",
                         style = "muppet_frame_content_marginTL",
                         children = {
-                            {type = "label", caption = huntingString, style = "muppet_label_text_large_bold_paddingSides"}
+                            { type = "label", caption = huntingString, style = "muppet_label_text_large_bold_paddingSides" }
                         }
                     }
                 )
@@ -100,11 +100,11 @@ Gui.UpdatePlayer = function(playerIndex)
                         type = "frame",
                         style = "muppet_frame_content_marginTL",
                         children = {
-                            {type = "label", caption = pack.warningText, style = "muppet_label_text_large_bold_paddingSides", styling = {font_color = Colors.lightred}}
+                            { type = "label", caption = pack.warningText, style = "muppet_label_text_large_bold_paddingSides", styling = { font_color = Colors.lightred } }
                         }
                     }
                 )
-                mainVisible, incommingVisible = true, true
+                mainVisible, incomingVisible = true, true
             end
         end
     end
@@ -119,7 +119,7 @@ Gui.UpdatePlayer = function(playerIndex)
     else
         huntingFlowElement.visible = false
     end
-    if incommingVisible then
+    if incomingVisible then
         incomingFlowElement.visible = true
     else
         incomingFlowElement.visible = false

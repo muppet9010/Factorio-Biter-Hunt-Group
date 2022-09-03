@@ -33,8 +33,15 @@
     "Lua.runtime.version": "Lua 5.2",
     "Lua.workspace.library": [
         "c:\\FactorioModding\\factorio-api",
+        "/utility", // Have to include it so we can get its TypeDefs.
+        "/scripts", // Have to include it so we can get its TypeDefs.
         "c:\\FactorioModding\\data",
         "c:\\FactorioModding\\data\\core\\lualib",
         "c:\\FactorioModding\\runtime-api"
+    ],
+    "Lua.workspace.ignoreDir": [
+        ".vscode",
+        "/utility/*", // Exclude it as we don't want to check it. We include it as a library file to load its TypeDefs still.
+        "/scripts/*", // Exclude it as we don't want to check it as all old code. We include it as a library file to load its TypeDefs still.
     ]
 }

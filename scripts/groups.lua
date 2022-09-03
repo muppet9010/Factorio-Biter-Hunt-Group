@@ -1,5 +1,5 @@
---Groups controls the triggering of biter hunt group creations and recieves any commands and external events
---Group is the reoccuring collection of a group of settings. A Pack is a specific instance of a group.
+--Groups controls the triggering of biter hunt group creations and receives any commands and external events
+--Group is the reoccurring collection of a group of settings. A Pack is a specific instance of a group.
 local Utils = require("utility/utils")
 local Logging = require("utility/logging")
 local Commands = require("utility/commands")
@@ -18,12 +18,12 @@ Groups.CreateGlobals = function()
 end
 
 Groups.OnLoad = function()
-    Commands.Register("biter_hunt_group_attack_now", {"api-description.biter_hunt_group_attack_now"}, Groups.MakeBitersAttackNowCommand, true)
+    Commands.Register("biter_hunt_group_attack_now", { "api-description.biter_hunt_group_attack_now" }, Groups.MakeBitersAttackNowCommand, true)
     Events.RegisterHandler(defines.events.on_player_joined_game, "BiterHuntGroups", Groups.OnPlayerJoinedGame)
-    Commands.Register("biter_hunt_group_write_out_results", {"api-description.biter_hunt_group_write_out_results"}, Groups.WriteOutHuntGroupResults, false)
+    Commands.Register("biter_hunt_group_write_out_results", { "api-description.biter_hunt_group_write_out_results" }, Groups.WriteOutHuntGroupResults, false)
     Interfaces.RegisterInterface("Groups.GetGlobalSettingForId", Groups.GetGlobalSettingForId)
-    Commands.Register("biter_hunt_group_add_biters", {"api-description.biter_hunt_group_add_biters"}, Groups.AddBitersToGroup, true)
-    Commands.Register("biter_hunt_group_reset_group_timer", {"api-description.biter_hunt_group_reset_group_timer"}, Groups.ResetGroupsPackTimer, true)
+    Commands.Register("biter_hunt_group_add_biters", { "api-description.biter_hunt_group_add_biters" }, Groups.AddBitersToGroup, true)
+    Commands.Register("biter_hunt_group_reset_group_timer", { "api-description.biter_hunt_group_reset_group_timer" }, Groups.ResetGroupsPackTimer, true)
 end
 
 Groups.OnStartup = function()
@@ -127,7 +127,7 @@ Groups.OnRuntimeModSettingChanged = function(event)
         )
     end
     if event == nil or event.setting == "biter_hunt_group-group_warning_text" then
-        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_warning_text", SettingsManager.ExpectedValueTypes.string, "Incoming Tunneling Biter Pack", "warningText")
+        Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_warning_text", SettingsManager.ExpectedValueTypes.string, "Incoming Tunnelling Biter Pack", "warningText")
     end
     if event == nil or event.setting == "biter_hunt_group-group_hunting_text" then
         Groups.HandleSettingWithArrayOfValues("global", "biter_hunt_group-group_hunting_text", SettingsManager.ExpectedValueTypes.string, "Pack currently hunting __1__ on __2__", "huntingText")
@@ -234,7 +234,7 @@ Groups.MakeBiterGroupPackAttackNow = function(group)
     local uniqueId = Interfaces.Call("Packs.GenerateUniqueId", group.id, pack.id)
     if EventScheduler.IsEventScheduled("Packs.PackAction_Warning", uniqueId) then
         EventScheduler.RemoveScheduledEvents("Packs.PackAction_Warning", uniqueId)
-        EventScheduler.ScheduleEvent(game.tick, "Packs.PackAction_Warning", uniqueId, {pack = pack})
+        EventScheduler.ScheduleEvent(game.tick, "Packs.PackAction_Warning", uniqueId, { pack = pack })
     end
 end
 
