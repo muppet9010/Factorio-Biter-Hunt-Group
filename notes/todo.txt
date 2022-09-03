@@ -6,9 +6,7 @@ Bugs:
 		- Player gets out of train and picks it up (biters may or may not have emerged from rocks at this point).
 		- Warning message shown and biters targetted at spawn:
 			ERROR - Biter target entity is invalid from command enemies - REPORT AS ERROR
-			ERROR - unrecognised result outcome: error.
 		- Biters targeted at spawn and appropriate message shown.
-	- Update licence.
 
 Next:
     - make targeted players accept a single name out of json format

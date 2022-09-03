@@ -415,6 +415,9 @@ Packs.RecordResult = function(outcome, pack)
     elseif outcome == "hunting" then
         local biterTargetPos = Packs.GetPositionForTarget(pack)
         game.print("[img=entity.medium-biter][img=entity.medium-biter][img=entity.medium-biter]" .. " hunting " .. pack.targetName .. " at [gps=" .. math.floor(biterTargetPos.x) .. "," .. math.floor(biterTargetPos.y) .. "]")
+    elseif outcome == "error" then
+        -- Error state detected and alerted at the time.
+        pack.finalResultReached = true
     else
         Logging.LogPrint("ERROR: unrecognised result outcome: " .. outcome)
         outcome = "error"

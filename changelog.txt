@@ -4,6 +4,7 @@ Date: 2022-09-xxx
   Features:
   Changes:
   Bugfixes:
+    - Improve messages shown in handled error state when the biters are then sent at spawn as a fallback behaviour.
   Info:
     - Licence updated.
 ---------------------------------------------------------------------------------------------------
