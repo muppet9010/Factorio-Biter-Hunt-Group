@@ -2,6 +2,7 @@ Bugs:
 
 
 Next:
+	- Add options to handle modded spawners much better; mod setting to include extra named spawner types, mod setting to include all spawner types, mod setting to blacklist named spawner types.
     - make targeted players accept a single name out of json format
     - add option to show number of biters left on the hunting gui. should be a __3__ and update on each biter death.
 	- make first biter start at a random angle rather than always 0.
